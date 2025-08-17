@@ -51,7 +51,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onImport
               ref={fileInputRef}
               onChange={handleFileChange}
               className="hidden"
-              accept=".txt"
+              accept=".json"
             />
           </div>
 

@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import type { GoutForecast, GoutForecastDay } from '../types';
 import { generateGoutForecast } from '../services/geminiService';
 import { type Language, type TranslationKey } from '../translations';
-import { SunIcon, CloudIcon, CloudRainIcon, CloudLightningIcon, TrendingUpIcon } from './IconComponents';
+import { SunIcon, CloudIcon, CloudRainIcon, CloudLightningIcon, TrendingUpIcon, FileHeartIcon } from './IconComponents';
 
 interface GoutForecastProps {
   t: (key: TranslationKey, substitutions?: Record<string, string | number>) => string;
   lang: Language;
+  healthProfileSummary: string;
 }
 
 const weatherIconMap: { [key: string]: React.FC<{ className?: string }> } = {
@@ -19,24 +20,28 @@ const weatherIconMap: { [key: string]: React.FC<{ className?: string }> } = {
 const getIndexClasses = (index: string) => {
     switch (index) {
         case 'Good':
+        case '좋음':
             return {
                 bg: 'bg-green-500/20',
                 text: 'text-green-300',
                 labelKey: 'goutIndexGood' as const
             };
         case 'Moderate':
+        case '보통':
             return {
                 bg: 'bg-yellow-500/20',
                 text: 'text-yellow-300',
                 labelKey: 'goutIndexModerate' as const
             };
         case 'Caution':
+        case '주의':
             return {
                 bg: 'bg-orange-500/20',
                 text: 'text-orange-300',
                 labelKey: 'goutIndexCaution' as const
             };
         case 'High Risk':
+        case '위험':
             return {
                 bg: 'bg-red-500/20',
                 text: 'text-red-300',
@@ -51,11 +56,11 @@ const getIndexClasses = (index: string) => {
     }
 };
 
-const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang }) => {  
+const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang, healthProfileSummary }) => {  
   const [forecastData, setForecastData] = useState<GoutForecast | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [locationSource, setLocationSource] = useState<'generic' | 'user'>('generic');
+  const [locationName, setLocationName] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -64,25 +69,27 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang }) => {
       setError(null);
       try {
         const location = coords ? { latitude: coords.latitude, longitude: coords.longitude } : undefined;
-        // Caching logic - v4 includes location awareness
-        const cacheKey = location 
-            ? `goutForecast_v4_${lang}_${location.latitude.toFixed(2)}_${location.longitude.toFixed(2)}`
-            : `goutForecast_v4_${lang}_generic`;
+        
+        // Improved cache key using a hash of the health profile
+        const profileHash = healthProfileSummary ? btoa(healthProfileSummary).substring(0, 10) : 'none';
+        const locationKeyPart = location ? `${location.latitude.toFixed(2)}_${location.longitude.toFixed(2)}` : 'generic';
+        const cacheKey = `goutForecast_v7_${lang}_${locationKeyPart}_${profileHash}`;
+        
         const cachedData = localStorage.getItem(cacheKey);
         const now = new Date().getTime();
 
         if (cachedData) {
           const { timestamp, data } = JSON.parse(cachedData);
-          // Cache for 4 hours
-          if (now - timestamp < 4 * 60 * 60 * 1000) {
+          const cacheDuration = healthProfileSummary ? (1 * 60 * 60 * 1000) : (4 * 60 * 60 * 1000); // 1hr for personalized, 4hr for generic
+          if (now - timestamp < cacheDuration) {
             setForecastData(data);
-            setLocationSource(location ? 'user' : 'generic');
+            setLocationName(data.locationName);
             setIsLoading(false);
             return;
           }
         }
 
-        const responseJson = await generateGoutForecast(lang, location);
+        const responseJson = await generateGoutForecast(lang, location, healthProfileSummary);
         const data = JSON.parse(responseJson) as GoutForecast;
         
         if (data.forecast && data.forecast.length > 7) {
@@ -90,12 +97,28 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang }) => {
         }
 
         setForecastData(data);
-        setLocationSource(location ? 'user' : 'generic');
+        setLocationName(data.locationName);
         localStorage.setItem(cacheKey, JSON.stringify({ timestamp: now, data }));
 
-      } catch (e) {
+      } catch (e: any) {
         console.error("Failed to fetch or parse gout forecast", e);
-        setError("Could not load forecast.");
+        
+        let errorMessage = '';
+        if (typeof e === 'string') {
+            errorMessage = e;
+        } else if (e instanceof Error) {
+            errorMessage = e.message;
+        } else if (typeof e === 'object' && e !== null) {
+            errorMessage = JSON.stringify(e);
+        } else {
+            errorMessage = String(e);
+        }
+
+        if (errorMessage.includes('429') || errorMessage.toLowerCase().includes('resource_exhausted') || errorMessage.toLowerCase().includes('quota')) {
+            setError(t('forecastErrorRateLimit'));
+        } else {
+            setError(t('forecastErrorGeneral'));
+        }
       } finally {
         setIsLoading(false);
       }
@@ -107,8 +130,24 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang }) => {
           fetchForecast(position.coords);
         },
         (geoError) => {
-          console.warn(`Geolocation error: ${geoError.message}`);
-          setLocationError(t('locationErrorGeneric'));
+          console.warn(`Geolocation error (${geoError.code}): ${geoError.message}`);
+          
+          let errorKey: TranslationKey;
+          
+          switch (geoError.code) {
+            case geoError.PERMISSION_DENIED:
+              // Differentiate between user denying permission vs. a browser policy block.
+              if (geoError.message.toLowerCase().includes('policy')) {
+                errorKey = 'locationErrorPolicy';
+              } else {
+                errorKey = 'locationErrorInstructions';
+              }
+              break;
+            default:
+              errorKey = 'locationErrorGeneral';
+          }
+          
+          setLocationError(t(errorKey));
           fetchForecast(); // Fetch generic forecast without location
         }
       );
@@ -116,7 +155,7 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang }) => {
       setLocationError(t('locationErrorNotSupported'));
       fetchForecast(); // Fetch generic forecast without location
     }
-  }, [lang, t]);
+  }, [lang, t, healthProfileSummary]);
   
   const renderSkeleton = () => (
      <div className="bg-zinc-800 rounded-lg p-4 animate-pulse">
@@ -156,7 +195,7 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang }) => {
   if (error || !forecastData || !forecastData.forecast || forecastData.forecast.length < 2) {
     return (
       <div className="bg-zinc-800 rounded-lg p-4 text-center text-red-400">
-        <p>{error || "Forecast data is unavailable."}</p>
+        <p>{error || t('forecastErrorGeneral')}</p>
       </div>
     );
   }
@@ -176,22 +215,20 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang }) => {
     </div>
   );
   
-  const forecastSourceText = locationSource === 'user' 
-    ? t('forecastSourceUser') 
-    : t('forecastSourceGeneric');
-
-
   return (
     <div className="bg-zinc-800 rounded-lg p-4">
       <h3 className="flex items-center text-md font-semibold text-sky-300 mb-1">
         <TrendingUpIcon className="w-5 h-5 mr-2 flex-shrink-0" />
         {t('goutForecastTitle')}
       </h3>
-      <p className="text-xs text-zinc-400 mb-3">{forecastSourceText}</p>
+      <p className="text-xs text-zinc-400 mb-3">{locationName}</p>
       
       {locationError && (
-        <div className="bg-amber-900/50 border border-amber-700 text-amber-300 text-xs px-3 py-2 rounded-md mb-3" role="alert">
-          {locationError}
+        <div className="bg-amber-900/50 border border-amber-700 text-amber-300 text-xs px-3 py-2 rounded-md mb-3 flex items-center justify-between" role="alert">
+          <span>{locationError}</span>
+          <button onClick={() => setLocationError(null)} className="ml-2 -mr-1 p-1 leading-none rounded-full hover:bg-amber-800/50" aria-label="Dismiss">
+             ×
+          </button>
         </div>
       )}
 
@@ -224,6 +261,15 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang }) => {
       </div>
 
       <div className="mt-4 pt-4 border-t border-zinc-700 flex flex-col gap-3">
+        {forecastData.personalizedAlert && (
+            <div className="p-3 bg-sky-900/50 border border-sky-800 rounded-lg flex items-start gap-3 mb-2">
+                <FileHeartIcon className="w-5 h-5 text-sky-400 flex-shrink-0 mt-0.5" />
+                <div>
+                    <h4 className="font-semibold text-sky-300 text-sm">{t('personalizedAlertTitle')}</h4>
+                    <p className="text-sm text-sky-200/90">{forecastData.personalizedAlert}</p>
+                </div>
+            </div>
+        )}
         <DetailCard title={t('today')} data={todayForecast} />
         <DetailCard title={t('tomorrow')} data={tomorrowForecast} />
       </div>

@@ -1,23 +1,22 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Content } from '@google/genai';
 import type { ChatMessage, GroundingChunk } from './types';
 import { generateChatResponseStream, summarizeHealthInfo } from './services/geminiService';
 import ChatWindow from './components/ChatWindow';
 import SymptomCheckinModal from './components/SymptomCheckinModal';
+import MedicationLogModal from './components/MedicationLogModal';
+import DietLogModal from './components/DietLogModal';
 import DashboardPanel from './components/DashboardPanel';
 import HealthSummaryModal from './components/HealthSummaryModal';
 import SettingsModal from './components/SettingsModal';
 import getTranslator, { type Language } from './translations';
 
-
 // Detect language once and get the translator function
 const lang: Language = navigator.language.split('-')[0] === 'ko' ? 'ko' : 'en';
 const t = getTranslator(lang);
 
-
 const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    // Lazy initializer: Load messages from localStorage on initial render
     try {
       const savedMessages = localStorage.getItem('goutChatMessages');
       if (savedMessages) {
@@ -32,19 +31,20 @@ const App: React.FC = () => {
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
   const [appError, setAppError] = useState<string | null>(null);
   const [isSymptomModalOpen, setIsSymptomModalOpen] = useState(false);
-  const [selectedSymptomDate, setSelectedSymptomDate] = useState<Date | null>(null);
+  const [isMedicationModalOpen, setIsMedicationModalOpen] = useState(false);
+  const [isDietModalOpen, setIsDietModalOpen] = useState(false);
+  const [selectedLogDate, setSelectedLogDate] = useState<Date | null>(null);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [healthSummary, setHealthSummary] = useState<string | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState<boolean>(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [healthProfileSummary, setHealthProfileSummary] = useState<string>('');
+  const healthSummaryUpdateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-
-  // Effect to set html lang attribute
   useEffect(() => {
     document.documentElement.lang = lang;
   }, []);
 
-  // Effect to save messages to localStorage whenever they change
   useEffect(() => {
     try {
         localStorage.setItem('goutChatMessages', JSON.stringify(messages));
@@ -54,30 +54,78 @@ const App: React.FC = () => {
     }
   }, [messages]);
 
+  const updateHealthSummary = useCallback(async () => {
+    if (messages.length < 2) {
+        setHealthProfileSummary('');
+        return;
+    }
+    try {
+        const history: Content[] = messages.map(msg => ({
+            role: msg.role,
+            parts: [{ text: msg.content }]
+        }));
+        const summary = await summarizeHealthInfo(history, lang);
+        setHealthProfileSummary(summary);
+    } catch (e: any) {
+        console.error("Failed to update health summary in background", e);
+        const errorMessage = e.toString();
+        if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
+            console.warn("Health summary update was rate-limited.");
+        }
+    }
+  }, [messages, lang]);
 
-  const handleSendMessage = useCallback(async (message: string) => {
+  useEffect(() => {
+    if (healthSummaryUpdateTimeout.current) {
+        clearTimeout(healthSummaryUpdateTimeout.current);
+    }
+
+    if (!isAiLoading) {
+        healthSummaryUpdateTimeout.current = setTimeout(() => {
+            updateHealthSummary();
+        }, 3000);
+    }
+
+    return () => {
+        if (healthSummaryUpdateTimeout.current) {
+            clearTimeout(healthSummaryUpdateTimeout.current);
+        }
+    };
+  }, [isAiLoading, messages, updateHealthSummary]);
+
+  const handleSendMessage = useCallback(async (message: { text: string, image?: { mimeType: string, data: string } }) => {
     if (isAiLoading) return;
 
     setIsAiLoading(true);
     setAppError(null);
-    const userMessage: ChatMessage = { role: 'user', content: message };
+    const userMessage: ChatMessage = { role: 'user', content: message.text, image: message.image };
     
     const currentMessages = [...messages, userMessage];
     setMessages(currentMessages);
     
     try {
       const history: Content[] = currentMessages
-        .filter(msg => msg.content) // Don't include empty messages in history
-        .map(msg => ({
-        role: msg.role,
-        parts: [{ text: msg.content }]
-      }));
+        .filter(msg => msg.content)
+        .map(msg => {
+            const parts: ({ text: string } | { inlineData: { mimeType: string, data: string } })[] = [{ text: msg.content }];
+            if (msg.image) {
+                parts.push({
+                    inlineData: {
+                        mimeType: msg.image.mimeType,
+                        data: msg.image.data
+                    }
+                });
+            }
+            return {
+                role: msg.role,
+                parts: parts
+            };
+        });
       
       const stream = await generateChatResponseStream(history, lang);
       
       let modelResponseText = '';
       const modelResponseSources: GroundingChunk[] = [];
-      // Add a placeholder for the model's response
       setMessages(prev => [...prev, { role: 'model', content: '' }]);
 
       for await (const chunk of stream) {
@@ -106,7 +154,6 @@ const App: React.FC = () => {
     } catch (e: any) {
       const errorMessage = `An error occurred: ${e.message}`;
       setAppError(errorMessage);
-      // On error, remove the optimistic user message and the empty model placeholder, then add an error message
       setMessages(prev => {
           const newMessages = prev.slice(0, -2);
           return [...newMessages, {role: 'model', content: `Sorry, I encountered an error. ${errorMessage}`}];
@@ -131,15 +178,33 @@ const App: React.FC = () => {
 
   const handleSymptomCheckComplete = (summary: string | null) => {
     setIsSymptomModalOpen(false);
-    setSelectedSymptomDate(null);
+    setSelectedLogDate(null);
     if (summary) {
-      handleSendMessage(summary);
+      handleSendMessage({ text: summary });
     }
   };
 
-  const openSymptomModal = (date: Date | null) => {
-    setSelectedSymptomDate(date || new Date());
-    setIsSymptomModalOpen(true);
+  const handleMedicationLogComplete = (log: { summary: string, image?: { mimeType: string, data: string } } | null) => {
+      setIsMedicationModalOpen(false);
+      setSelectedLogDate(null);
+      if (log) {
+          handleSendMessage({ text: log.summary, image: log.image });
+      }
+  };
+  
+  const handleDietLogComplete = (log: { summary: string, image?: { mimeType: string, data: string } } | null) => {
+      setIsDietModalOpen(false);
+      setSelectedLogDate(null);
+      if (log) {
+          handleSendMessage({ text: log.summary, image: log.image });
+      }
+  };
+
+  const openLogModal = (type: 'symptom' | 'medication' | 'diet', date: Date | null) => {
+    setSelectedLogDate(date || new Date());
+    if (type === 'symptom') setIsSymptomModalOpen(true);
+    if (type === 'medication') setIsMedicationModalOpen(true);
+    if (type === 'diet') setIsDietModalOpen(true);
   };
   
   const handleShowSummary = useCallback(async () => {
@@ -161,17 +226,17 @@ const App: React.FC = () => {
   }, [messages, lang]);
 
   const handleExportHistory = () => {
-    const formattedHistory = messages.map(msg => {
-        const role = msg.role === 'user' ? 'User' : 'GoutCare AI';
-        return `[${role}]\n${msg.content}\n\n---------------------\n`;
-    }).join('');
-
-    const blob = new Blob([formattedHistory], { type: 'text/plain;charset=utf-8' });
+    const dataToExport = {
+        version: "1.1", // Mark version for potential future import logic changes
+        messages: messages
+    };
+    const jsonString = JSON.stringify(dataToExport, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     const date = new Date().toISOString().split('T')[0];
-    link.download = `GoutCareAI-ChatHistory-${date}.txt`;
+    link.download = `GoutCareAI-ChatHistory-v1.1-${date}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -188,28 +253,8 @@ const App: React.FC = () => {
         const text = e.target?.result as string;
         if (text) {
             try {
-                const importedMessages: ChatMessage[] = [];
-                const blocks = text.split('\n\n---------------------\n').filter(b => b.trim() !== '');
-
-                for (const block of blocks) {
-                    const lines = block.trim().split('\n');
-                    const header = lines[0];
-                    const content = lines.slice(1).join('\n');
-
-                    let role: 'user' | 'model';
-
-                    if (header.includes('[User]')) {
-                        role = 'user';
-                    } else if (header.includes('[GoutCare AI]')) {
-                        role = 'model';
-                    } else {
-                        continue; // Skip malformed blocks
-                    }
-
-                    if (content.trim()) { // Only add if content exists
-                        importedMessages.push({ role, content });
-                    }
-                }
+                const data = JSON.parse(text);
+                const importedMessages: ChatMessage[] = data.messages || [];
 
                 if (importedMessages.length > 0) {
                     setMessages(importedMessages);
@@ -230,18 +275,37 @@ const App: React.FC = () => {
     reader.readAsText(file);
   };
 
-
   return (
     <>
       <SymptomCheckinModal 
         isOpen={isSymptomModalOpen}
         onClose={() => {
           setIsSymptomModalOpen(false);
-          setSelectedSymptomDate(null);
+          setSelectedLogDate(null);
         }}
         onComplete={handleSymptomCheckComplete}
         t={t}
-        selectedDate={selectedSymptomDate}
+        selectedDate={selectedLogDate}
+      />
+      <MedicationLogModal
+        isOpen={isMedicationModalOpen}
+        onClose={() => {
+          setIsMedicationModalOpen(false);
+          setSelectedLogDate(null);
+        }}
+        onComplete={handleMedicationLogComplete}
+        t={t}
+        selectedDate={selectedLogDate}
+      />
+      <DietLogModal
+        isOpen={isDietModalOpen}
+        onClose={() => {
+          setIsDietModalOpen(false);
+          setSelectedLogDate(null);
+        }}
+        onComplete={handleDietLogComplete}
+        t={t}
+        selectedDate={selectedLogDate}
       />
       <HealthSummaryModal
         isOpen={isSummaryModalOpen}
@@ -274,9 +338,10 @@ const App: React.FC = () => {
             <div className="lg:col-span-1 min-h-0">
               <DashboardPanel
                 messages={messages}
-                onLogSymptom={(date) => openSymptomModal(date)}
+                onLogRequest={openLogModal}
                 t={t}
                 lang={lang}
+                healthProfileSummary={healthProfileSummary}
               />
             </div>
 
@@ -297,7 +362,7 @@ const App: React.FC = () => {
                     onSendMessage={handleSendMessage}
                     isLoading={isAiLoading}
                     onOpenSettings={() => setIsSettingsModalOpen(true)}
-                    onStartSymptomCheck={() => openSymptomModal(null)}
+                    onStartSymptomCheck={() => openLogModal('symptom', null)}
                     onShowSummary={handleShowSummary}
                     t={t}
                   />

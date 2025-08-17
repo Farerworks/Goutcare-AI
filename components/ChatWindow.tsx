@@ -8,7 +8,7 @@ import type { TranslationKey } from '../translations';
 
 interface ChatWindowProps {
   messages: ChatMessage[];
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: { text: string, image?: { mimeType: string, data: string }}) => void;
   isLoading: boolean;
   onOpenSettings: () => void;
   onStartSymptomCheck: () => void;
@@ -57,6 +57,15 @@ const ChatMessageItem: React.FC<{ message: ChatMessage }> = ({ message }) => {
       <div 
         className={`max-w-xl p-4 rounded-xl shadow-md ${isUser ? 'bg-teal-600 rounded-br-none' : 'bg-zinc-700 rounded-bl-none'}`}
       >
+        {message.image && (
+          <div className="mb-3">
+            <img 
+              src={`data:${message.image.mimeType};base64,${message.image.data}`} 
+              alt="User upload" 
+              className="rounded-lg max-w-full h-auto"
+            />
+          </div>
+        )}
         <div className="text-zinc-100">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
@@ -130,7 +139,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, onSendMessage, isLoad
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim() && !isLoading) {
-      onSendMessage(input.trim());
+      onSendMessage({ text: input.trim() });
       setInput('');
     }
   };

@@ -9,6 +9,10 @@ export type ChatMessage = {
   role: 'user' | 'model';
   content: string;
   sources?: GroundingChunk[];
+  image?: {
+    mimeType: string;
+    data: string;
+  }
 };
 
 export type SymptomEntry = {
@@ -16,6 +20,21 @@ export type SymptomEntry = {
   painLevel: number;
   summary: string;
 };
+
+export type MedicationEntry = {
+    date: Date;
+    timeOfDay: 'Morning' | 'Lunch' | 'Dinner' | 'Bedtime';
+    medicationName: string;
+    summary: string;
+};
+
+export type DietEntry = {
+    date: Date;
+    timeOfDay: 'Breakfast' | 'Lunch' | 'Dinner' | 'After Dinner';
+    foodDescription: string;
+    summary: string;
+};
+
 
 export type GoutForecastDay = {
   day: string;
@@ -26,5 +45,7 @@ export type GoutForecastDay = {
 };
 
 export type GoutForecast = {
+  locationName: string;
   forecast: GoutForecastDay[];
+  personalizedAlert?: string;
 };
