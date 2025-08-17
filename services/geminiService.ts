@@ -1,6 +1,4 @@
-
-
-import { GoogleGenAI, type Content, type GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, type Content, type GenerateContentResponse, Type } from "@google/genai";
 
 const API_KEY = process.env.API_KEY;
 
@@ -300,7 +298,7 @@ const systemInstruction_KO = `당신은 '통풍 관리 AI'이며, 매우 전문�
     *   사용자가 약을 먹어야 할지 물어보면, 단순히 거절하지 말고 다음과 같은 4단계의 섬세한 접근법으로 응답해야 합니다.
     *   **1단계 (공감 및 상황 이해):** 사용자의 상황을 먼저 인정합니다. 예: "증상이 있으시니 약 복용을 고려하고 계시는군요."
     *   **2단계 (안전한 역할 설명):** 당신의 역할과 한계를 부드럽게 설명합니다. 예: "제가 지침에 나온 약물 정보를 드릴 순 있지만, 지금 어떤 약을 드셔야 할지 판단하는 것은 의료 전문가의 역할입니다."
-    *   **3단계 (올바른 행동 유도):** 가장 안전하고 중요한 다음 단계가 의사 또는 약사와의 상담임을 명확하게 안내합니다.
+    *   **3단계 (올봐른 행동 유도):** 가장 안전하고 중요한 다음 단계가 의사 또는 약사와의 상담임을 명확하게 안내합니다.
     *   **4단계 (미래의 도움 제안):** 전문가의 도움을 받은 후에도 계속 도움을 줄 수 있음을 알려 대화의 문을 열어둡니다. 예: "만약 병원에서 약을 처방받으시면, 그 약이 지침에서 어떻게 설명되는지에 대해 제가 알려드릴 수 있습니다."
 
 11. **비전형적인 증상에 대한 심층 응대:**
@@ -380,6 +378,68 @@ export const summarizeHealthInfo = async (history: Content[], lang: string = 'en
         contents: historyForSummary,
         config: {
             systemInstruction: instruction,
+        }
+    });
+
+    return response.text.trim();
+};
+
+export const generateGoutForecast = async (lang: string = 'en', location?: { latitude: number; longitude: number; }): Promise<string> => {
+    const locationPrompt = location 
+        ? (lang === 'ko' 
+            ? `위도 ${location.latitude}, 경도 ${location.longitude} 위치의 날씨 예보를 기반으로` 
+            : `Based on the weather forecast for the location at latitude ${location.latitude} and longitude ${location.longitude},`)
+        : (lang === 'ko'
+            ? "온대 지역의 일반적인 날씨 패턴을 기반으로"
+            : "Based on general weather patterns for a temperate region,");
+
+    const prompt = lang === 'ko' ?
+        `${locationPrompt} 오늘부터 7일간의 날씨 예보를 생성해 주세요. 각 날에 대해, '통풍 지수'('좋음', '보통', '주의', '위험' 중 하나), 0(위험 낮음)에서 100(위험 높음) 사이의 숫자 값인 '통풍 위험 지수', 그리고 해당 지수에 대한 이유를 '날씨가 좋아 관절 컨디션이 좋을 거에요.' 또는 '기압이 낮아져 관절 통증에 주의가 필요해요.' 와 같이 사용자에게 직접 전달하는 친근한 어조로, 10단어 이내의 매우 간결한 설명으로 제공해주세요. 통풍 지수는 일반적으로 비나 폭풍우가 오기 전이나 동반될 때 나타나는 기압 하강, 높은 습도, 급격한 온도 강하와 같이 관절 통증에 영향을 미치는 것으로 알려진 요인들을 기반으로 해야 합니다.` :
+        `${locationPrompt} create a 7-day weather forecast starting from today. For each day, provide a categorical 'Gout Index' ('Good', 'Moderate', 'Caution', 'High Risk'), a numeric 'Gout Risk Index' from 0 (low risk) to 100 (high risk), and a very concise explanation (max 10 words) for the index, written in a friendly, direct-to-user tone, like 'Good weather should mean happy joints today.' or 'Be cautious of joint pain as pressure drops.'. The Gout Index should be influenced by factors known to affect joint pain, such as falling barometric pressure, high humidity, and sudden temperature drops, which typically precede or accompany rainy or stormy weather.`;
+    
+    const responseSchema = {
+        type: Type.OBJECT,
+        properties: {
+            forecast: {
+                type: Type.ARRAY,
+                description: "An array of 7 daily forecast objects.",
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        day: {
+                            type: Type.STRING,
+                            description: "The day of the week (e.g., 'Monday')."
+                        },
+                        weather: {
+                            type: Type.STRING,
+                            description: "A single word describing the weather: 'Sunny', 'Cloudy', 'Rainy', or 'Stormy'."
+                        },
+                        goutIndex: {
+                            type: Type.STRING,
+                            description: "The calculated gout risk index: 'Good', 'Moderate', 'Caution', or 'High Risk'."
+                        },
+                        goutIndexNumeric: {
+                            type: Type.NUMBER,
+                            description: "A numeric risk index from 0 to 100."
+                        },
+                        explanation: {
+                            type: Type.STRING,
+                            description: "A very concise explanation (max 10 words) for the given Gout Index."
+                        }
+                    },
+                    required: ["day", "weather", "goutIndex", "goutIndexNumeric", "explanation"]
+                }
+            }
+        },
+        required: ["forecast"]
+    };
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: responseSchema,
         }
     });
 

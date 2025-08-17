@@ -276,6 +276,7 @@ const App: React.FC = () => {
                 messages={messages}
                 onLogSymptom={(date) => openSymptomModal(date)}
                 t={t}
+                lang={lang}
               />
             </div>
 

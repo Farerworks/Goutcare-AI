@@ -1,10 +1,12 @@
 
 
 
+
 import React, { useState, useMemo, useEffect } from 'react';
 import type { ChatMessage, SymptomEntry } from '../types';
-import type { TranslationKey } from '../translations';
+import type { Language, TranslationKey } from '../translations';
 import { LightbulbIcon, ChevronLeftIcon, ChevronRightIcon } from './IconComponents';
+import GoutForecast from './GoutForecast';
 
 // --- UTILITY: PARSE SYMPTOM DATA ---
 const parseSymptomMessages = (messages: ChatMessage[]): SymptomEntry[] => {
@@ -229,9 +231,10 @@ interface DashboardPanelProps {
   messages: ChatMessage[];
   onLogSymptom: (date: Date) => void;
   t: (key: TranslationKey, substitutions?: Record<string, string | number>) => string;
+  lang: Language;
 }
 
-const DashboardPanel: React.FC<DashboardPanelProps> = ({ messages, onLogSymptom, t }) => {
+const DashboardPanel: React.FC<DashboardPanelProps> = ({ messages, onLogSymptom, t, lang }) => {
     const symptomDataByDate = useMemo(() => {
         const parsedEntries = parseSymptomMessages(messages);
         const map = new Map<string, SymptomEntry[]>();
@@ -249,6 +252,10 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({ messages, onLogSymptom,
     <div className="bg-zinc-800/50 rounded-lg shadow-2xl lg:p-6 p-3 h-full flex flex-col gap-6 overflow-y-auto">
       <h2 className="text-xl font-bold text-teal-400 flex-shrink-0 border-b border-zinc-700 pb-2">{t('dashboardTitle')}</h2>
       
+      <div className="flex-shrink-0">
+        <GoutForecast t={t} lang={lang} />
+      </div>
+
       {/* --- Mobile View --- */}
       <div className="lg:hidden">
           <SymptomWeekView symptomDataByDate={symptomDataByDate} onLogSymptom={onLogSymptom} t={t} />

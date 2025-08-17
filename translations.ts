@@ -71,6 +71,24 @@ const translations = {
     month1: "January", month2: "February", month3: "March", month4: "April", month5: "May", month6: "June",
     month7: "July", month8: "August", month9: "September", month10: "October", month11: "November", month12: "December",
     daySun: "S", dayMon: "M", dayTue: "T", dayWed: "W", dayThu: "T", dayFri: "F", daySat: "S",
+
+    // Gout Forecast
+    goutForecastTitle: "Weekly Gout Forecast",
+    goutIndex: "Gout Index",
+    goutIndexGood: "Good",
+    goutIndexModerate: "Moderate",
+    goutIndexCaution: "Caution",
+    goutIndexHighRisk: "High Risk",
+    loadingForecast: "Loading forecast...",
+    forecastDay0: "Sun", forecastDay1: "Mon", forecastDay2: "Tue", forecastDay3: "Wed", forecastDay4: "Thu", forecastDay5: "Fri", forecastDay6: "Sat",
+    today: "Today",
+    tomorrow: "Tomorrow",
+    goutRiskIndex: "Gout Risk Index",
+    forecastReason: "Forecast Basis",
+    locationErrorGeneric: "Location access denied. Showing a generic forecast for a temperate region.",
+    locationErrorNotSupported: "Geolocation is not supported by this browser. Showing a generic forecast.",
+    forecastSourceUser: "Based on your current location",
+    forecastSourceGeneric: "Based on a temperate region",
   },
   ko: {
     // App.tsx
@@ -144,6 +162,24 @@ const translations = {
     month1: "1월", month2: "2월", month3: "3월", month4: "4월", month5: "5월", month6: "6월",
     month7: "7월", month8: "8월", month9: "9월", month10: "10월", month11: "11월", month12: "12월",
     daySun: "일", dayMon: "월", dayTue: "화", dayWed: "수", dayThu: "목", dayFri: "금", daySat: "토",
+
+    // Gout Forecast
+    goutForecastTitle: "주간 통풍 예보",
+    goutIndex: "통풍 지수",
+    goutIndexGood: "좋음",
+    goutIndexModerate: "보통",
+    goutIndexCaution: "주의",
+    goutIndexHighRisk: "위험",
+    loadingForecast: "예보를 불러오는 중...",
+    forecastDay0: "일", forecastDay1: "월", forecastDay2: "화", forecastDay3: "수", forecastDay4: "목", forecastDay5: "금", forecastDay6: "토",
+    today: "오늘",
+    tomorrow: "내일",
+    goutRiskIndex: "통풍 위험 지수",
+    forecastReason: "예보 근거",
+    locationErrorGeneric: "위치 정보 접근이 거부되었습니다. 일반적인 온대 지역 예보를 표시합니다.",
+    locationErrorNotSupported: "이 브라우저에서는 위치 정보를 지원하지 않습니다. 일반적인 온대 지역 예보를 표시합니다.",
+    forecastSourceUser: "현재 위치 기반",
+    forecastSourceGeneric: "온대 지역 기반",
   }
 };
 
