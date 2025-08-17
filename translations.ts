@@ -38,10 +38,23 @@ const translations = {
     // HealthSummaryModal.tsx
     healthSummaryTitle: "My Health Summary",
     healthSummaryDescription: "This is a summary of the key health information you've shared, which helps me provide more personalized advice. This information is stored only on your device.",
-    exportHistory: "Export Conversation History",
     close: "Close",
     loadingSummary: "Generating your summary...",
     noSummaryFound: "No specific health information has been shared yet. As you share details about medications, conditions, or uric acid levels, they will be summarized here.",
+
+    // Settings Modal
+    settingsTitle: "Settings",
+    settingsAria: "Open Settings",
+    importHistory: "Import",
+    importHistoryDescription: "Import a conversation from a .txt file. This will overwrite the current conversation.",
+    exportHistory: "Export",
+    exportHistoryDescription: "Export the current conversation to a .txt file for backup.",
+    resetConversation: "Reset Conversation",
+    resetConversationDescription: "Permanently delete the conversation history and start fresh.",
+    resetConfirmation: "Are you sure you want to permanently delete your conversation history? This cannot be undone.",
+    importConfirmation: "This will replace your current conversation with the contents of the file. Are you sure you want to continue?",
+    importError: "Failed to import file. It may be corrupted or in the wrong format.",
+    importSuccess: "Conversation imported successfully.",
 
     // Tip of the Day
     tipOfTheDayTitle: "Today's Tip",
@@ -98,10 +111,23 @@ const translations = {
     // HealthSummaryModal.tsx
     healthSummaryTitle: "내 건강 정보 요약",
     healthSummaryDescription: "사용자님께서 공유해주신 주요 건강 정보를 요약한 내용입니다. 이 정보는 더 개인화된 조언을 제공하는 데 도움이 되며, 사용자님의 기기에만 저장됩니다.",
-    exportHistory: "대화 내용 전체 내보내기",
     close: "닫기",
     loadingSummary: "요약 정보를 생성하는 중입니다...",
     noSummaryFound: "아직 공유된 특정 건강 정보가 없습니다. 복용 중인 약, 건강 상태, 요산 수치 등에 대한 정보를 공유하시면 여기에 요약됩니다.",
+
+    // Settings Modal
+    settingsTitle: "설정",
+    settingsAria: "설정 열기",
+    importHistory: "가져오기",
+    importHistoryDescription: ".txt 파일로 내보낸 대화 내용을 가져옵니다. 현재 대화 내용은 덮어쓰여집니다.",
+    exportHistory: "내보내기",
+    exportHistoryDescription: "현재 대화 내용을 백업용 .txt 파일로 내보냅니다.",
+    resetConversation: "대화 초기화",
+    resetConversationDescription: "현재 대화 내용을 영구적으로 삭제하고 새로 시작합니다.",
+    resetConfirmation: "정말로 대화 내용을 영구적으로 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+    importConfirmation: "파일의 내용으로 현재 대화 내용이 대체됩니다. 계속하시겠습니까?",
+    importError: "파일을 가져오는 데 실패했습니다. 파일이 손상되었거나 형식이 잘못되었을 수 있습니다.",
+    importSuccess: "대화 내용을 성공적으로 가져왔습니다.",
 
     // Tip of the Day
     tipOfTheDayTitle: "오늘의 팁",

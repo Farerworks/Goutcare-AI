@@ -48,7 +48,7 @@ GoutCare AI is a personalized AI assistant designed to help gout patients better
 -   **Local-Only Storage:** All conversation history and symptom data are stored exclusively in the user's web browser `LocalStorage`.
 -   **No Server-Side Data:** Sensitive health information is never sent to or stored on an external server, ensuring complete privacy.
 -   **AI-Powered Health Summary:** A feature that allows users to generate an on-device summary of key health information shared during the conversation, without data leaving their browser.
--   **Conversation History Export:** A feature to download the complete chat history as a text file for personal records or sharing with a doctor.
+-   **Conversation History Import/Export:** Features to download the complete chat history as a text file for backup and to import a history file, overwriting the current session.
 -   **Chat Reset:** A feature allows users to clear all their data and start fresh at any time.
 
 ## 5. UI/UX Design

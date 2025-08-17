@@ -3,14 +3,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { ChatMessage } from '../types';
-import { SendIcon, UserIcon, BotIcon, TrashIcon, ClipboardIcon, LinkIcon, FileHeartIcon } from './IconComponents';
+import { SendIcon, UserIcon, BotIcon, CogIcon, ClipboardIcon, LinkIcon, FileHeartIcon } from './IconComponents';
 import type { TranslationKey } from '../translations';
 
 interface ChatWindowProps {
   messages: ChatMessage[];
   onSendMessage: (message: string) => void;
   isLoading: boolean;
-  onClear: () => void;
+  onOpenSettings: () => void;
   onStartSymptomCheck: () => void;
   onShowSummary: () => void;
   t: (key: TranslationKey, substitutions?: Record<string, string | number>) => string;
@@ -115,7 +115,7 @@ const ChatMessageItem: React.FC<{ message: ChatMessage }> = ({ message }) => {
 };
 
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ messages, onSendMessage, isLoading, onClear, onStartSymptomCheck, onShowSummary, t }) => {
+const ChatWindow: React.FC<ChatWindowProps> = ({ messages, onSendMessage, isLoading, onOpenSettings, onStartSymptomCheck, onShowSummary, t }) => {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -147,9 +147,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, onSendMessage, isLoad
                 <FileHeartIcon className="w-4 h-4" />
                 {t('myHealthSummary')}
             </button>
-            <button onClick={onClear} className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-400 bg-red-900/50 rounded-md hover:bg-red-900 transition-colors" title={t('resetChatAria')}>
-                <TrashIcon className="w-4 h-4" />
-                {t('resetChat')}
+            <button onClick={onOpenSettings} className="flex items-center justify-center w-8 h-8 text-zinc-400 bg-zinc-700/50 rounded-full hover:bg-zinc-700 hover:text-zinc-200 transition-colors" title={t('settingsAria')}>
+                <CogIcon className="w-5 h-5" />
             </button>
         </div>
       </div>

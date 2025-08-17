@@ -6,6 +6,7 @@ import ChatWindow from './components/ChatWindow';
 import SymptomCheckinModal from './components/SymptomCheckinModal';
 import DashboardPanel from './components/DashboardPanel';
 import HealthSummaryModal from './components/HealthSummaryModal';
+import SettingsModal from './components/SettingsModal';
 import getTranslator, { type Language } from './translations';
 
 
@@ -35,6 +36,7 @@ const App: React.FC = () => {
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [healthSummary, setHealthSummary] = useState<string | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState<boolean>(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
 
   // Effect to set html lang attribute
@@ -115,13 +117,16 @@ const App: React.FC = () => {
   }, [messages, isAiLoading, lang]);
 
   const handleClear = () => {
-    setMessages([
-        {
-            role: 'model',
-            content: t('historyCleared')
-        }
-    ]);
-    setAppError(null);
+    if (window.confirm(t('resetConfirmation'))) {
+        setMessages([
+            {
+                role: 'model',
+                content: t('historyCleared')
+            }
+        ]);
+        setAppError(null);
+        setIsSettingsModalOpen(false);
+    }
   };
 
   const handleSymptomCheckComplete = (summary: string | null) => {
@@ -173,6 +178,58 @@ const App: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleImportHistory = (file: File) => {
+    if (!window.confirm(t('importConfirmation'))) {
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const text = e.target?.result as string;
+        if (text) {
+            try {
+                const importedMessages: ChatMessage[] = [];
+                const blocks = text.split('\n\n---------------------\n').filter(b => b.trim() !== '');
+
+                for (const block of blocks) {
+                    const lines = block.trim().split('\n');
+                    const header = lines[0];
+                    const content = lines.slice(1).join('\n');
+
+                    let role: 'user' | 'model';
+
+                    if (header.includes('[User]')) {
+                        role = 'user';
+                    } else if (header.includes('[GoutCare AI]')) {
+                        role = 'model';
+                    } else {
+                        continue; // Skip malformed blocks
+                    }
+
+                    if (content.trim()) { // Only add if content exists
+                        importedMessages.push({ role, content });
+                    }
+                }
+
+                if (importedMessages.length > 0) {
+                    setMessages(importedMessages);
+                    alert(t('importSuccess'));
+                    setIsSettingsModalOpen(false);
+                } else {
+                    throw new Error("No valid messages found in file.");
+                }
+            } catch (error) {
+                console.error("Failed to parse imported file", error);
+                alert(t('importError'));
+            }
+        }
+    };
+    reader.onerror = () => {
+         alert(t('importError'));
+    };
+    reader.readAsText(file);
+  };
+
 
   return (
     <>
@@ -191,8 +248,18 @@ const App: React.FC = () => {
         onClose={() => setIsSummaryModalOpen(false)}
         summary={healthSummary}
         isLoading={isSummaryLoading}
-        onExport={handleExportHistory}
         t={t}
+      />
+       <SettingsModal
+          isOpen={isSettingsModalOpen}
+          onClose={() => setIsSettingsModalOpen(false)}
+          onImport={handleImportHistory}
+          onExport={() => {
+              handleExportHistory();
+              setIsSettingsModalOpen(false);
+          }}
+          onReset={handleClear}
+          t={t}
       />
       <div className="h-screen flex flex-col p-4 sm:p-6 lg:p-8 bg-zinc-900">
         <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col min-h-0">
@@ -228,7 +295,7 @@ const App: React.FC = () => {
                     messages={messages}
                     onSendMessage={handleSendMessage}
                     isLoading={isAiLoading}
-                    onClear={handleClear}
+                    onOpenSettings={() => setIsSettingsModalOpen(true)}
                     onStartSymptomCheck={() => openSymptomModal(null)}
                     onShowSummary={handleShowSummary}
                     t={t}

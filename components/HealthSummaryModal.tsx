@@ -8,11 +8,10 @@ interface HealthSummaryModalProps {
   onClose: () => void;
   summary: string | null;
   isLoading: boolean;
-  onExport: () => void;
   t: (key: TranslationKey) => string;
 }
 
-const HealthSummaryModal: React.FC<HealthSummaryModalProps> = ({ isOpen, onClose, summary, isLoading, onExport, t }) => {
+const HealthSummaryModal: React.FC<HealthSummaryModalProps> = ({ isOpen, onClose, summary, isLoading, t }) => {
   if (!isOpen) return null;
 
   const LoadingIndicator = () => (
@@ -48,8 +47,7 @@ const HealthSummaryModal: React.FC<HealthSummaryModalProps> = ({ isOpen, onClose
             )}
         </div>
 
-        <div className="mt-6 flex flex-col sm:flex-row justify-between gap-3">
-          <button onClick={onExport} className="w-full sm:w-auto px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-500 transition-colors">{t('exportHistory')}</button>
+        <div className="mt-6 flex justify-end">
           <button onClick={onClose} className="w-full sm:w-auto px-4 py-2 bg-zinc-600 rounded-md hover:bg-zinc-500 transition-colors">{t('close')}</button>
         </div>
       </div>

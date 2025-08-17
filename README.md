@@ -1,4 +1,3 @@
-
 # GoutCare AI ✨
 
 **Your Personal AI Assistant for Gout Management, Powered by Google Gemini**
@@ -32,9 +31,12 @@ GoutCare AI is a privacy-first, browser-based application designed to help indiv
 
 - **Privacy-First Data Management:**
   - **100% Client-Side:** All conversation history and symptom data are stored directly in the browser's `localStorage`.
-  - **AI-Powered Health Summary:** Generates a concise summary of key health information from your conversation history, running entirely on your device.
-  - **Conversation Export:** Allows you to export your entire chat history as a `.txt` file.
   - **No Data Collection:** The application does not send any personal health data to a server.
+  - **AI-Powered Health Summary:** Generates a concise summary of key health information from your conversation history, running entirely on your device.
+  - **Full Data Control:** Provides robust tools for data management:
+    - **Import:** Restore a conversation from a previously exported `.txt` file.
+    - **Export:** Save your entire chat history as a `.txt` file for backup or sharing.
+    - **Reset:** Permanently clear all conversation data to start fresh.
 
 ## 🛠️ Tech Stack
 
@@ -79,20 +81,23 @@ This project is a static web application and can be run using any simple local s
 
 ```
 .
-├── components/         # Reusable React components
+├── App.tsx                   # Main application component
+├── index.html                # Entry HTML file
+├── index.tsx                 # React root entry point
+├── metadata.json             # Application metadata for the platform
+├── prd.md                    # Product Requirements Document
+├── README.md                 # This file
+├── translations.ts           # i18n translations for EN/KO
+├── types.ts                  # TypeScript type definitions
+├── components/               # Reusable React components
 │   ├── ChatWindow.tsx
 │   ├── DashboardPanel.tsx
 │   ├── HealthSummaryModal.tsx
 │   ├── IconComponents.tsx
+│   ├── SettingsModal.tsx
 │   └── SymptomCheckinModal.tsx
-├── services/           # Services for external APIs
-│   └── geminiService.ts
-├── translations.ts     # i18n translations for EN/KO
-├── types.ts            # TypeScript type definitions
-├── App.tsx             # Main application component
-├── index.html          # Entry HTML file
-├── index.tsx           # React root entry point
-└── README.md           # This file
+└── services/                 # Services for external APIs
+    └── geminiService.ts
 ```
 
 ## 📄 License
