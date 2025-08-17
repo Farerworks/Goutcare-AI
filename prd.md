@@ -25,11 +25,12 @@ GoutCare AI is a personalized AI assistant designed to help gout patients better
 ## 4. Key Features
 
 ### 4.1. Conversational AI Agent
--   **Guideline-Based Responses:** Answers questions about diet, lifestyle, and medications based on built-in gout management guidelines (available in English and Korean).
+-   **Guideline-Based Responses:** Answers questions about diet, lifestyle, and medications based on a synthesis of internationally recognized medical guidelines, specifically the **2020 American College of Rheumatology (ACR) Guideline**, **EULAR recommendations**, and the **Korean College of Rheumatology (KCR) Guideline**. The guidelines are available in English and Korean. The AI's knowledge also includes an understanding of the complex relationship between gout and major chronic diseases (comorbidities) like Chronic Kidney Disease (CKD), Cardiovascular Disease (CVD), and Metabolic Syndrome, based on recent medical reviews. This knowledge base also covers the critical role of lifestyle factors, such as the direct link between obesity, lack of exercise, and their impact on uric acid levels and gout management. The AI's knowledge now includes a detailed list of common foods categorized by their purine content (mg per 100g), allowing it to offer more specific dietary advice.
 -   **Intelligent Web Search:** When a user asks a question not covered by the guidelines, it performs a Google Search to provide a summarized answer with reliable sources.
 -   **Natural Conversation Flow:** Remembers the context of past conversations and avoids redundant citations to maintain a natural dialogue.
 -   **Markdown Rendering:** Renders bold text, lists, and other formatting in the AI's responses as clean HTML for improved readability.
 -   **Safety-First Design:** Does not provide medical diagnoses or prescriptions and includes a disclaimer advising consultation with a professional in every response.
+-   **Empathetic & Safe Interaction Logic:** The AI is programmed with sophisticated, multi-step response protocols for sensitive user queries. For atypical symptoms, it validates the user's concern, presents alternative causes, compares with typical symptoms, and suggests next steps. For medication questions, it responds with empathy while safely guiding the user toward professional consultation. It also handles requests to "learn" new material by transparently explaining its real-time search capabilities.
 
 ### 4.2. Health Dashboard
 -   **Symptom Calendar:**
@@ -46,13 +47,16 @@ GoutCare AI is a personalized AI assistant designed to help gout patients better
 ### 4.4. Data Management & Privacy
 -   **Local-Only Storage:** All conversation history and symptom data are stored exclusively in the user's web browser `LocalStorage`.
 -   **No Server-Side Data:** Sensitive health information is never sent to or stored on an external server, ensuring complete privacy.
+-   **AI-Powered Health Summary:** A feature that allows users to generate an on-device summary of key health information shared during the conversation, without data leaving their browser.
+-   **Conversation History Export:** A feature to download the complete chat history as a text file for personal records or sharing with a doctor.
 -   **Chat Reset:** A feature allows users to clear all their data and start fresh at any time.
 
 ## 5. UI/UX Design
 
 -   **Design Philosophy:** A calm and intuitive design that helps users comfortably access information and focus on their health.
--   **Layout:** A responsive design that provides an optimal experience on all devices, including desktops (dashboard + chat), tablets, and mobile phones.
--   **Color Palette:** A dark mode theme (based on Slate colors) to reduce eye strain, with Sky Blue as an accent color to build a sense of trust and clarity.
+-   **Brand Identity:** The application title is consistently displayed as "GoutCare AI" across all languages to maintain a strong and recognizable brand identity.
+-   **Layout:** A responsive two-panel design that provides an optimal experience on all devices, showing the dashboard and chat side-by-side on desktops and a stacked view on mobile.
+-   **Color Palette:** A dark mode theme (based on Zinc/Slate colors) to reduce eye strain, with Teal and Sky Blue as accent colors to build a sense of trust and clarity.
 -   **Accessibility:** Designed with accessibility in mind, using clear icons, ARIA labels, and a logical layout.
 
 ## 6. Technical Stack

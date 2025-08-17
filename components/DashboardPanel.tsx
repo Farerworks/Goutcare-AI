@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useMemo, useEffect } from 'react';
 import type { ChatMessage, SymptomEntry } from '../types';
 import type { TranslationKey } from '../translations';
@@ -54,12 +55,12 @@ const TipOfTheDay: React.FC<{ t: (key: TranslationKey) => string }> = ({ t }) =>
   if (!tipKey) return null;
 
   return (
-    <div className="bg-slate-800 rounded-lg p-4">
+    <div className="bg-zinc-800 rounded-lg p-4">
       <h3 className="flex items-center text-md font-semibold text-amber-300 mb-2">
         <LightbulbIcon className="w-5 h-5 mr-2 flex-shrink-0" />
         {t('tipOfTheDayTitle')}
       </h3>
-      <p className="text-sm text-slate-300">{t(tipKey)}</p>
+      <p className="text-sm text-zinc-300">{t(tipKey)}</p>
     </div>
   );
 };
@@ -85,9 +86,9 @@ const SymptomCalendar: React.FC<{
         const monthName = t(`month${currentDate.getMonth() + 1}` as TranslationKey);
         return (
             <div className="flex items-center justify-between mb-4">
-                <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-slate-700"><ChevronLeftIcon className="w-5 h-5" /></button>
+                <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-zinc-700"><ChevronLeftIcon className="w-5 h-5" /></button>
                 <h3 className="font-semibold text-lg">{monthName} {currentDate.getFullYear()}</h3>
-                <button onClick={() => changeMonth(1)} className="p-2 rounded-full hover:bg-slate-700"><ChevronRightIcon className="w-5 h-5" /></button>
+                <button onClick={() => changeMonth(1)} className="p-2 rounded-full hover:bg-zinc-700"><ChevronRightIcon className="w-5 h-5" /></button>
             </div>
         );
     };
@@ -104,7 +105,7 @@ const SymptomCalendar: React.FC<{
 
         return (
             <>
-                <div className="grid grid-cols-7 text-center text-xs text-slate-400 mb-2">
+                <div className="grid grid-cols-7 text-center text-xs text-zinc-400 mb-2">
                     {dayHeaders.map(day => <div key={day}>{t(day as TranslationKey)}</div>)}
                 </div>
                 <div className="grid grid-cols-7 text-center text-sm">
@@ -122,16 +123,16 @@ const SymptomCalendar: React.FC<{
                              <div key={day} className="relative p-1">
                                 <button 
                                     onClick={() => onLogSymptom(dayDate)}
-                                    className={`relative w-8 h-8 flex items-center justify-center rounded-full mx-auto transition-colors hover:bg-slate-700 ${isToday ? 'bg-sky-700 font-bold' : ''}`}
+                                    className={`relative w-8 h-8 flex items-center justify-center rounded-full mx-auto transition-colors hover:bg-zinc-700 ${isToday ? 'bg-teal-700 font-bold' : ''}`}
                                     aria-label={`Log symptom for ${dayDate.toLocaleDateString()}`}
                                 >
                                     <span>{day}</span>
                                     {highestPainEntry && (
                                         <div className="group absolute bottom-0 right-0 transform translate-x-1/4 translate-y-1/4">
-                                            <div className={`w-3 h-3 rounded-full border-2 border-slate-800 ${getPainColor(highestPainEntry.painLevel)}`}></div>
-                                            <div className="absolute bottom-full mb-2 w-64 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700 text-slate-200 p-2 rounded-lg text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-left whitespace-pre-wrap">
+                                            <div className={`w-3 h-3 rounded-full border-2 border-zinc-800 ${getPainColor(highestPainEntry.painLevel)}`}></div>
+                                            <div className="absolute bottom-full mb-2 w-64 left-1/2 -translate-x-1/2 bg-zinc-900 border border-zinc-700 text-zinc-200 p-2 rounded-lg text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-left whitespace-pre-wrap">
                                                 <strong className="font-bold">{t('painLevelLegend')}: {highestPainEntry.painLevel}/10</strong>
-                                                <hr className="border-slate-600 my-1"/>
+                                                <hr className="border-zinc-600 my-1"/>
                                                 {entries!.map(e => e.summary).join('\n---\n')}
                                             </div>
                                         </div>
@@ -146,14 +147,14 @@ const SymptomCalendar: React.FC<{
     };
 
     return (
-        <div className="bg-slate-800 rounded-lg p-4 flex-1 flex flex-col min-h-0">
-            <h3 className="text-md font-semibold text-slate-200 mb-2">{t('symptomCalendarTitle')}</h3>
+        <div className="bg-zinc-800 rounded-lg p-4 flex-1 flex flex-col min-h-0">
+            <h3 className="text-md font-semibold text-zinc-200 mb-2">{t('symptomCalendarTitle')}</h3>
             {renderHeader()}
             <div className="flex-1 overflow-y-auto">
                  {renderDays()}
             </div>
-            <div className="mt-4 pt-4 border-t border-slate-700 flex flex-col items-center">
-                 <div className="flex items-center space-x-4 text-xs text-slate-400">
+            <div className="mt-4 pt-4 border-t border-zinc-700 flex flex-col items-center">
+                 <div className="flex items-center space-x-4 text-xs text-zinc-400">
                     <span>{t('painLevelLegend')}:</span>
                     <span className="flex items-center"><div className="w-3 h-3 rounded-full bg-green-500 mr-1"></div>1-3</span>
                     <span className="flex items-center"><div className="w-3 h-3 rounded-full bg-yellow-500 mr-1"></div>4-6</span>
@@ -162,7 +163,7 @@ const SymptomCalendar: React.FC<{
                 </div>
                 <button 
                     onClick={() => onLogSymptom(new Date())}
-                    className="mt-4 w-full bg-sky-600 text-white font-bold py-2 px-4 rounded-md hover:bg-sky-500 transition-colors"
+                    className="mt-4 w-full bg-teal-600 text-white font-bold py-2 px-4 rounded-md hover:bg-teal-500 transition-colors"
                 >
                     {t('logTodaysSymptoms')}
                 </button>
@@ -191,8 +192,8 @@ const SymptomWeekView: React.FC<{
     const dayHeaders = ['daySun', 'dayMon', 'dayTue', 'dayWed', 'dayThu', 'dayFri', 'daySat'];
 
     return (
-        <div className="bg-slate-800 rounded-lg p-3">
-            <h3 className="text-md font-semibold text-slate-200 mb-3">{t('symptomCalendarTitle')}</h3>
+        <div className="bg-zinc-800 rounded-lg p-3">
+            <h3 className="text-md font-semibold text-zinc-200 mb-3">{t('symptomCalendarTitle')}</h3>
             <div className="grid grid-cols-7 gap-1 text-center">
                 {weekDates.map((date, index) => {
                     const dayKey = date.toISOString().split('T')[0];
@@ -204,14 +205,14 @@ const SymptomWeekView: React.FC<{
                         <button 
                             key={dayKey} 
                             onClick={() => onLogSymptom(date)}
-                            className="flex flex-col items-center p-1 rounded-md hover:bg-slate-700 transition-colors"
+                            className="flex flex-col items-center p-1 rounded-md hover:bg-zinc-700 transition-colors"
                             aria-label={`Log symptom for ${date.toLocaleDateString()}`}
                         >
-                            <span className="text-xs text-slate-400">{t(dayHeaders[index] as TranslationKey)}</span>
-                            <span className={`relative mt-1 w-8 h-8 flex items-center justify-center rounded-full text-sm ${isToday ? 'bg-sky-700 font-bold' : ''}`}>
+                            <span className="text-xs text-zinc-400">{t(dayHeaders[index] as TranslationKey)}</span>
+                            <span className={`relative mt-1 w-8 h-8 flex items-center justify-center rounded-full text-sm ${isToday ? 'bg-teal-700 font-bold' : ''}`}>
                                 {date.getDate()}
                                 {highestPainEntry && (
-                                    <span className={`absolute bottom-0 right-0 block w-2.5 h-2.5 rounded-full border-2 border-slate-800 ${getPainColor(highestPainEntry.painLevel)}`}></span>
+                                    <span className={`absolute bottom-0 right-0 block w-2.5 h-2.5 rounded-full border-2 border-zinc-800 ${getPainColor(highestPainEntry.painLevel)}`}></span>
                                 )}
                             </span>
                         </button>
@@ -245,8 +246,8 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({ messages, onLogSymptom,
     }, [messages]);
 
   return (
-    <div className="bg-slate-800/50 rounded-lg shadow-2xl lg:p-6 p-3 h-full flex flex-col gap-6 overflow-y-auto">
-      <h2 className="text-xl font-bold text-sky-400 flex-shrink-0 border-b border-slate-700 pb-2">{t('dashboardTitle')}</h2>
+    <div className="bg-zinc-800/50 rounded-lg shadow-2xl lg:p-6 p-3 h-full flex flex-col gap-6 overflow-y-auto">
+      <h2 className="text-xl font-bold text-teal-400 flex-shrink-0 border-b border-zinc-700 pb-2">{t('dashboardTitle')}</h2>
       
       {/* --- Mobile View --- */}
       <div className="lg:hidden">

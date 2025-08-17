@@ -13,24 +13,27 @@ GoutCare AI is a privacy-first, browser-based application designed to help indiv
 
 ## 🚀 Key Features
 
-- **Conversational AI Assistant:**
+- **Intelligent & Empathetic AI Assistant:**
   - **Powered by Google Gemini (`gemini-2.5-flash`):** Provides intelligent, context-aware answers.
   - **Guideline-Based Knowledge:** Core knowledge is based on established gout management guidelines.
-  - **Live Web Search:** Uses the Gemini `googleSearch` tool to find up-to-date information when requested, complete with source citations.
+  - **Sophisticated Dialogue:** Employs advanced, multi-step logic to handle sensitive topics like atypical symptoms and medication questions with empathy and caution.
+  - **Live Web Search:** Uses the Gemini `googleSearch` tool to find up-to-date information, complete with source citations.
   - **Multilingual:** Fully supports both English and Korean.
 
-- **Health Dashboard:**
+- **Comprehensive Health Dashboard:**
   - **Interactive Symptom Calendar:** A responsive calendar that displays a monthly view on desktops and a weekly view on mobile devices.
   - **Visual Pain Tracking:** Logged symptoms are marked on the calendar with a color-coded dot representing the pain level, making it easy to spot patterns.
   - **Detailed Tooltips:** Hover over a date to see a detailed summary of the logged symptoms.
   - **Today's Tip:** A motivational widget that displays daily tips for gout management.
 
-- **Symptom Logging:**
+- **Seamless Symptom Logging:**
   - **Intuitive Modal:** A simple and clean interface to log pain location, pain level (0-10), associated symptoms (swelling, redness, etc.), and personal notes.
-  - **Seamless Integration:** Logged symptoms are automatically formatted and sent to the chat, creating a continuous record that the AI can reference.
+  - **Automatic Chat Integration:** Logged symptoms are automatically formatted and sent to the chat, creating a continuous record that the AI can reference.
 
-- **Privacy First:**
+- **Privacy-First Data Management:**
   - **100% Client-Side:** All conversation history and symptom data are stored directly in the browser's `localStorage`.
+  - **AI-Powered Health Summary:** Generates a concise summary of key health information from your conversation history, running entirely on your device.
+  - **Conversation Export:** Allows you to export your entire chat history as a `.txt` file.
   - **No Data Collection:** The application does not send any personal health data to a server.
 
 ## 🛠️ Tech Stack
@@ -79,6 +82,7 @@ This project is a static web application and can be run using any simple local s
 ├── components/         # Reusable React components
 │   ├── ChatWindow.tsx
 │   ├── DashboardPanel.tsx
+│   ├── HealthSummaryModal.tsx
 │   ├── IconComponents.tsx
 │   └── SymptomCheckinModal.tsx
 ├── services/           # Services for external APIs

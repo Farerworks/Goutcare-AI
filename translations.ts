@@ -1,7 +1,6 @@
 const translations = {
   en: {
     // App.tsx
-    goutCareAI: "GoutCare AI",
     appSubtitle: "Your Personal Assistant for Gout Management, Grounded in Medical Guidelines",
     initializing: "Initializing AI Assistant...",
     welcomeMessage: "Hello! I am GoutCare AI. On the left, you can now find your Health Dashboard to track symptoms. How can I help you today?\n\nUse the 'Log Today's Symptoms' button or the clipboard icon to log your symptoms.",
@@ -14,9 +13,12 @@ const translations = {
     chatWindowTitle: "GoutCare AI",
     chatWindowSubtitle: "Your Personal Gout Assistant",
     resetChat: "Reset Chat",
+    resetChatAria: "Reset Conversation History",
     inputPlaceholder: "Ask about diet, symptoms, or management...",
     symptomCheckinAria: "Symptom Check-in",
     sendMessageAria: "Send message",
+    myHealthSummary: "My Health Summary",
+    myHealthSummaryAria: "View a summary of your key health info",
 
     // SymptomCheckinModal.tsx
     symptomCheckinTitle: "Symptom Check-in",
@@ -32,6 +34,14 @@ const translations = {
     cancel: "Cancel",
     completeCheckin: "Complete Check-in",
     alertPainLocation: "Please specify the pain location.",
+
+    // HealthSummaryModal.tsx
+    healthSummaryTitle: "My Health Summary",
+    healthSummaryDescription: "This is a summary of the key health information you've shared, which helps me provide more personalized advice. This information is stored only on your device.",
+    exportHistory: "Export Conversation History",
+    close: "Close",
+    loadingSummary: "Generating your summary...",
+    noSummaryFound: "No specific health information has been shared yet. As you share details about medications, conditions, or uric acid levels, they will be summarized here.",
 
     // Tip of the Day
     tipOfTheDayTitle: "Today's Tip",
@@ -51,7 +61,6 @@ const translations = {
   },
   ko: {
     // App.tsx
-    goutCareAI: "통풍 관리 AI",
     appSubtitle: "의학 지침에 근거한 개인 통풍 관리 어시스턴트",
     initializing: "AI 어시스턴트 초기화 중...",
     welcomeMessage: "안녕하세요! 저는 통풍 관리 AI입니다. 이제 왼쪽에서 건강 대시보드를 통해 증상을 추적할 수 있습니다. 무엇을 도와드릴까요?\n\n'오늘 증상 기록' 버튼이나 클립보드 아이콘을 사용해 증상을 기록해 보세요.",
@@ -61,12 +70,15 @@ const translations = {
     dashboardTitle: "건강 대시보드",
 
     // ChatWindow.tsx
-    chatWindowTitle: "통풍 관리 AI",
+    chatWindowTitle: "GoutCare AI",
     chatWindowSubtitle: "개인 통풍 어시스턴트",
     resetChat: "대화 초기화",
+    resetChatAria: "대화 기록 초기화",
     inputPlaceholder: "식단, 증상, 관리에 대해 질문하세요...",
     symptomCheckinAria: "증상 기록",
     sendMessageAria: "메시지 보내기",
+    myHealthSummary: "내 건강 요약",
+    myHealthSummaryAria: "내 주요 건강 정보 요약 보기",
     
     // SymptomCheckinModal.tsx
     symptomCheckinTitle: "증상 기록",
@@ -82,6 +94,14 @@ const translations = {
     cancel: "취소",
     completeCheckin: "기록 완료",
     alertPainLocation: "통증 부위를 입력해주세요.",
+
+    // HealthSummaryModal.tsx
+    healthSummaryTitle: "내 건강 정보 요약",
+    healthSummaryDescription: "사용자님께서 공유해주신 주요 건강 정보를 요약한 내용입니다. 이 정보는 더 개인화된 조언을 제공하는 데 도움이 되며, 사용자님의 기기에만 저장됩니다.",
+    exportHistory: "대화 내용 전체 내보내기",
+    close: "닫기",
+    loadingSummary: "요약 정보를 생성하는 중입니다...",
+    noSummaryFound: "아직 공유된 특정 건강 정보가 없습니다. 복용 중인 약, 건강 상태, 요산 수치 등에 대한 정보를 공유하시면 여기에 요약됩니다.",
 
     // Tip of the Day
     tipOfTheDayTitle: "오늘의 팁",

@@ -1,12 +1,11 @@
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Content } from '@google/genai';
 import type { ChatMessage, GroundingChunk } from './types';
-import { generateChatResponseStream } from './services/geminiService';
+import { generateChatResponseStream, summarizeHealthInfo } from './services/geminiService';
 import ChatWindow from './components/ChatWindow';
 import SymptomCheckinModal from './components/SymptomCheckinModal';
 import DashboardPanel from './components/DashboardPanel';
+import HealthSummaryModal from './components/HealthSummaryModal';
 import getTranslator, { type Language } from './translations';
 
 
@@ -33,6 +32,9 @@ const App: React.FC = () => {
   const [appError, setAppError] = useState<string | null>(null);
   const [isSymptomModalOpen, setIsSymptomModalOpen] = useState(false);
   const [selectedSymptomDate, setSelectedSymptomDate] = useState<Date | null>(null);
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
+  const [healthSummary, setHealthSummary] = useState<string | null>(null);
+  const [isSummaryLoading, setIsSummaryLoading] = useState<boolean>(false);
 
 
   // Effect to set html lang attribute
@@ -134,6 +136,42 @@ const App: React.FC = () => {
     setSelectedSymptomDate(date || new Date());
     setIsSymptomModalOpen(true);
   };
+  
+  const handleShowSummary = useCallback(async () => {
+    setIsSummaryModalOpen(true);
+    setIsSummaryLoading(true);
+    setHealthSummary(null);
+    try {
+        const history: Content[] = messages.map(msg => ({
+            role: msg.role,
+            parts: [{ text: msg.content }]
+        }));
+        const summary = await summarizeHealthInfo(history, lang);
+        setHealthSummary(summary || t('noSummaryFound'));
+    } catch (e: any) {
+        setHealthSummary(`Error generating summary: ${e.message}`);
+    } finally {
+        setIsSummaryLoading(false);
+    }
+  }, [messages, lang]);
+
+  const handleExportHistory = () => {
+    const formattedHistory = messages.map(msg => {
+        const role = msg.role === 'user' ? 'User' : 'GoutCare AI';
+        return `[${role}]\n${msg.content}\n\n---------------------\n`;
+    }).join('');
+
+    const blob = new Blob([formattedHistory], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const date = new Date().toISOString().split('T')[0];
+    link.download = `GoutCareAI-ChatHistory-${date}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
 
   return (
@@ -148,13 +186,21 @@ const App: React.FC = () => {
         t={t}
         selectedDate={selectedSymptomDate}
       />
-      <div className="h-screen flex flex-col p-4 sm:p-6 lg:p-8 bg-slate-900">
+      <HealthSummaryModal
+        isOpen={isSummaryModalOpen}
+        onClose={() => setIsSummaryModalOpen(false)}
+        summary={healthSummary}
+        isLoading={isSummaryLoading}
+        onExport={handleExportHistory}
+        t={t}
+      />
+      <div className="h-screen flex flex-col p-4 sm:p-6 lg:p-8 bg-zinc-900">
         <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col min-h-0">
           <header className="text-center mb-6 flex-shrink-0">
-            <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-cyan-300">
-              {t('goutCareAI')}
+            <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">
+              GoutCare AI
             </h1>
-            <p className="mt-2 text-slate-400">{t('appSubtitle')}</p>
+            <p className="mt-2 text-zinc-400">{t('appSubtitle')}</p>
           </header>
 
           <main className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 min-h-0 lg:grid-rows-1 grid-rows-[auto_1fr]">
@@ -184,6 +230,7 @@ const App: React.FC = () => {
                     isLoading={isAiLoading}
                     onClear={handleClear}
                     onStartSymptomCheck={() => openSymptomModal(null)}
+                    onShowSummary={handleShowSummary}
                     t={t}
                   />
               </div>

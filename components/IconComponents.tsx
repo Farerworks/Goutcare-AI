@@ -90,3 +90,12 @@ export const LinkIcon = ({ className }: { className?: string }) => (
     <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"></path>
   </svg>
 );
+
+export const FileHeartIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4" />
+    <polyline points="14 2 14 8 20 8" />
+    <path d="M10.29 10.86a2.5 2.5 0 0 0-3.54 3.54l1.25 1.25.2.2.2.2 1.25 1.25 2-2.02" />
+    <path d="m7.8 15.2-1.24-1.25" />
+  </svg>
+);

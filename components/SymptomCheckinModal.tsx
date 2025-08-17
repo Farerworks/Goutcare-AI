@@ -77,25 +77,25 @@ const SymptomCheckinModal: React.FC<SymptomCheckinModalProps> = ({ isOpen, onClo
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={handleClose}>
-      <div className="bg-slate-800 rounded-lg shadow-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
-        <h2 className="text-2xl font-bold text-sky-400 mb-2 text-center">{t('symptomCheckinTitle')}</h2>
-        {formattedDate && <p className="text-center text-slate-400 mb-4">{formattedDate}</p>}
+      <div className="bg-zinc-800 rounded-lg shadow-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+        <h2 className="text-2xl font-bold text-teal-400 mb-2 text-center">{t('symptomCheckinTitle')}</h2>
+        {formattedDate && <p className="text-center text-zinc-400 mb-4">{formattedDate}</p>}
         
         <div className="space-y-4">
           <div>
-            <label htmlFor="painLocation" className="block text-sm font-medium text-slate-300 mb-1">{t('painLocationLabel')}</label>
+            <label htmlFor="painLocation" className="block text-sm font-medium text-zinc-300 mb-1">{t('painLocationLabel')}</label>
             <input
               type="text"
               id="painLocation"
               value={painLocation}
               onChange={e => setPainLocation(e.target.value)}
               placeholder={t('painLocationPlaceholder')}
-              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
 
           <div>
-            <label htmlFor="painLevel" className="block text-sm font-medium text-slate-300 mb-1">{t('painLevelLabel', { painLevel })}</label>
+            <label htmlFor="painLevel" className="block text-sm font-medium text-zinc-300 mb-1">{t('painLevelLabel', { painLevel })}</label>
             <input
               type="range"
               id="painLevel"
@@ -103,12 +103,12 @@ const SymptomCheckinModal: React.FC<SymptomCheckinModalProps> = ({ isOpen, onClo
               max="10"
               value={painLevel}
               onChange={e => setPainLevel(parseInt(e.target.value))}
-              className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+              className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">{t('otherSymptomsLabel')}</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">{t('otherSymptomsLabel')}</label>
             <div className="flex flex-wrap gap-2">
               {symptomOptions.map(symptom => (
                 <button
@@ -116,8 +116,8 @@ const SymptomCheckinModal: React.FC<SymptomCheckinModalProps> = ({ isOpen, onClo
                   onClick={() => handleSymptomToggle(symptom.value)}
                   className={`px-3 py-1 rounded-full text-sm transition-colors ${
                     symptoms.includes(symptom.value)
-                      ? 'bg-sky-600 text-white'
-                      : 'bg-slate-700 hover:bg-slate-600'
+                      ? 'bg-teal-600 text-white'
+                      : 'bg-zinc-700 hover:bg-zinc-600'
                   }`}
                 >
                   {t(symptom.key)}
@@ -127,21 +127,21 @@ const SymptomCheckinModal: React.FC<SymptomCheckinModalProps> = ({ isOpen, onClo
           </div>
 
           <div>
-            <label htmlFor="notes" className="block text-sm font-medium text-slate-300 mb-1">{t('notesLabel')}</label>
+            <label htmlFor="notes" className="block text-sm font-medium text-zinc-300 mb-1">{t('notesLabel')}</label>
             <textarea
               id="notes"
               value={notes}
               onChange={e => setNotes(e.target.value)}
               rows={3}
               placeholder={t('notesPlaceholder')}
-              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
             ></textarea>
           </div>
         </div>
 
         <div className="mt-6 flex justify-end space-x-3">
-          <button onClick={handleClose} className="px-4 py-2 bg-slate-600 rounded-md hover:bg-slate-500 transition-colors">{t('cancel')}</button>
-          <button onClick={handleSubmit} className="px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors">{t('completeCheckin')}</button>
+          <button onClick={handleClose} className="px-4 py-2 bg-zinc-600 rounded-md hover:bg-zinc-500 transition-colors">{t('cancel')}</button>
+          <button onClick={handleSubmit} className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-500 transition-colors">{t('completeCheckin')}</button>
         </div>
       </div>
     </div>
