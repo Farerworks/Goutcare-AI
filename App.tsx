@@ -116,6 +116,7 @@ const App: React.FC = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [healthProfileSummary, setHealthProfileSummary] = useState<string>('');
   const [isLogSelectionModalOpen, setIsLogSelectionModalOpen] = useState(false);
+  const [summaryCache, setSummaryCache] = useState<{ key: string, summary: string } | null>(null);
   const healthSummaryUpdateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const showSuggestedPrompts = messages.length <= 1;
@@ -169,7 +170,7 @@ const App: React.FC = () => {
     if (!isAiLoading) {
         healthSummaryUpdateTimeout.current = setTimeout(() => {
             updateHealthSummary();
-        }, 30000);
+        }, 120000);
     }
 
     return () => {
@@ -343,6 +344,14 @@ const App: React.FC = () => {
 
   const handleShowSummary = useCallback(async () => {
     setIsSummaryModalOpen(true);
+    const cacheKey = `${messages.length}-${messages[messages.length - 1]?.content}`;
+
+    if (summaryCache && summaryCache.key === cacheKey) {
+        setHealthSummary(summaryCache.summary);
+        setIsSummaryLoading(false);
+        return;
+    }
+
     setIsSummaryLoading(true);
     setHealthSummary(null);
     try {
@@ -351,13 +360,15 @@ const App: React.FC = () => {
             parts: [{ text: msg.content }]
         }));
         const summary = await summarizeHealthInfo(history, lang);
-        setHealthSummary(summary || t('noSummaryFound'));
+        const finalSummary = summary || t('noSummaryFound');
+        setHealthSummary(finalSummary);
+        setSummaryCache({ key: cacheKey, summary: finalSummary });
     } catch (e: any) {
         setHealthSummary(`Error generating summary: ${e.message}`);
     } finally {
         setIsSummaryLoading(false);
     }
-  }, [messages, lang, t]);
+  }, [messages, lang, t, summaryCache]);
 
   const handleExportHistory = () => {
     const dataToExport = {

@@ -1,8 +1,7 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { ChatMessage } from '../types';
 import type { Language, TranslationKey } from '../translations';
 import GoutForecast from './GoutForecast';
-import { useDebounce } from '../hooks/useDebounce';
 import { LightbulbIcon } from './IconComponents';
 
 // --- SUB-COMPONENT: TIP OF THE DAY ---
@@ -33,12 +32,10 @@ interface DashboardPanelProps {
 
 const DashboardPanel: React.FC<DashboardPanelProps> = ({ messages, t, lang, healthProfileSummary }) => {
     
-    const debouncedHealthProfileSummary = useDebounce(healthProfileSummary, 60000);
-    
   return (
     <div className="p-3 lg:p-6 h-full flex flex-col gap-6 overflow-y-auto">
       <div className="flex-shrink-0">
-        <GoutForecast t={t} lang={lang} healthProfileSummary={debouncedHealthProfileSummary} />
+        <GoutForecast t={t} lang={lang} healthProfileSummary={healthProfileSummary} />
       </div>
 
       <div className="flex-shrink-0">
