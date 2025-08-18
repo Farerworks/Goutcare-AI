@@ -7,6 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- PDF.js library and worker from CDN - Kept for potential future use, but not actively used now -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
       // Required to configure the worker for PDF.js to run in the browser
       if (typeof pdfjsLib !== 'undefined') {
@@ -25,8 +28,13 @@
   }
 }
 </script>
+<style>
+    body {
+        font-family: 'Inter', sans-serif;
+    }
+</style>
 </head>
-<body class="bg-zinc-900 text-zinc-200 font-sans">
+<body class="bg-zinc-950 text-zinc-200">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>

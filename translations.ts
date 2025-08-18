@@ -3,15 +3,11 @@ const translations = {
     // App.tsx
     appSubtitle: "Your Personal Assistant for Gout Management, Grounded in Medical Guidelines",
     initializing: "Initializing AI Assistant...",
-    welcomeMessage: "Hello! I am GoutCare AI. On the left, you can now find your Health Dashboard to track symptoms, medication, and diet. How can I help you today?",
+    welcomeMessage: "Hello! I am GoutCare AI. On the left is your Health Dashboard, and on the right is our chat. You can log symptoms, medications, or meals using the calendar, or ask me anything about gout management. How can I assist you today?",
     historyCleared: "Conversation history cleared. How can I help you start fresh?",
     errorPrefix: "Error: ",
     closeError: "×",
     dashboardTitle: "Health Dashboard",
-    // Dashboard Tabs
-    dashboardTabSymptoms: "Symptoms",
-    dashboardTabMedication: "Medication",
-    dashboardTabDiet: "Diet",
 
     // ChatWindow.tsx
     chatWindowTitle: "GoutCare AI",
@@ -23,6 +19,10 @@ const translations = {
     sendMessageAria: "Send message",
     myHealthSummary: "My Health Summary",
     myHealthSummaryAria: "View a summary of your key health info",
+    suggestedPrompt1: "What are some low-purine foods?",
+    suggestedPrompt2: "Can I drink alcohol if I have gout?",
+    suggestedPrompt3: "What should I do during a gout flare-up?",
+    addLogAria: "Add a new health log",
 
     // SymptomCheckinModal.tsx
     symptomCheckinTitle: "Symptom Log",
@@ -38,27 +38,41 @@ const translations = {
     cancel: "Cancel",
     completeCheckin: "Complete Log",
     alertPainLocation: "Please specify the pain location.",
+    recentLocations: "Recent Locations",
+    back: "Back",
+    next: "Next",
+    painLevelNone: "None",
+    painLevelModerate: "Moderate",
+    painLevelSevere: "Severe",
 
     // MedicationLogModal.tsx
     medicationLogTitle: "Medication Log",
     medicationNameLabel: "Medication Name",
-    medicationNamePlaceholder: "e.g., Allopurinol 100mg, Colchicine",
+    medicationNamePlaceholder: "e.g., Allopurinol, Colchicine",
     timeOfDayLabel: "Time of Day",
     timeOfDayMorning: "Morning",
     timeOfDayLunch: "Lunch",
     timeOfDayDinner: "Dinner",
     timeOfDayBedtime: "Bedtime",
     intakeTimeLabel: "Intake Time (optional)",
+    medicationNotesPlaceholder: "e.g., Took with food, any side effects.",
     alertMedicationName: "Please enter the medication name.",
     addPhoto: "Add Photo",
+    takePhoto: "Take Photo",
+    chooseFromAlbum: "Choose from Album",
+    recentMedications: "Recent Medications",
 
     // DietLogModal.tsx
     dietLogTitle: "Diet Log",
+    dietLogStep1Title: "What did you eat?",
+    dietLogStep2Title: "When did you eat?",
     foodDescriptionLabel: "Food/Meal Description",
     foodDescriptionPlaceholder: "e.g., Grilled salmon, steamed vegetables, and rice",
+    dietNotesPlaceholder: "e.g., How you felt after the meal, ingredients.",
     timeOfDayBreakfast: "Breakfast",
     timeOfDayAfterDinner: "After Dinner",
     alertFoodDescription: "Please describe the food or meal.",
+    recentMeals: "Recent Meals",
 
     // HealthSummaryModal.tsx
     healthSummaryTitle: "My Health Summary",
@@ -91,9 +105,8 @@ const translations = {
 
     // Symptom Calendar
     symptomCalendarTitle: "Log Calendar",
-    logTodaysSymptoms: "Log Today's Symptoms",
-    logMedication: "Log Medication",
-    logDiet: "Log Diet",
+    logForToday: "Log for Today",
+    logEntryFor: "Log Entry For",
     painLevelLegend: "Pain Level",
     month1: "January", month2: "February", month3: "March", month4: "April", month5: "May", month6: "June",
     month7: "July", month8: "August", month9: "September", month10: "October", month11: "November", month12: "December",
@@ -121,20 +134,20 @@ const translations = {
     personalizedAlertTitle: "Personalized Alert",
     forecastErrorRateLimit: "The forecast service is temporarily unavailable due to high demand. Please try again in a few minutes.",
     forecastErrorGeneral: "Could not load forecast at this time.",
+
+    // Pain Trend Chart
+    painTrendChartTitle: "Pain Trend (Last 30 Days)",
+    painTrendChartNoData: "Log at least two symptoms with pain levels to see your trend.",
   },
   ko: {
     // App.tsx
     appSubtitle: "의학 지침에 근거한 개인 통풍 관리 어시스턴트",
     initializing: "AI 어시스턴트 초기화 중...",
-    welcomeMessage: "안녕하세요! 저는 통풍 관리 AI입니다. 이제 왼쪽에서 건강 대시보드를 통해 증상, 복용, 식단을 추적할 수 있습니다. 무엇을 도와드릴까요?",
+    welcomeMessage: "안녕하세요! 저는 통풍 관리 AI입니다. 왼쪽은 건강 대시보드, 오른쪽은 채팅 공간입니다. 캘린더를 사용해 증상, 약, 식단을 기록하거나, 통풍 관리에 대해 무엇이든 질문해 보세요. 무엇을 도와드릴까요?",
     historyCleared: "대화 기록이 삭제되었습니다. 어떻게 새로 시작할까요?",
     errorPrefix: "오류: ",
     closeError: "×",
     dashboardTitle: "건강 대시보드",
-    // Dashboard Tabs
-    dashboardTabSymptoms: "증상",
-    dashboardTabMedication: "복용",
-    dashboardTabDiet: "식단",
 
     // ChatWindow.tsx
     chatWindowTitle: "GoutCare AI",
@@ -146,6 +159,10 @@ const translations = {
     sendMessageAria: "메시지 보내기",
     myHealthSummary: "내 건강 요약",
     myHealthSummaryAria: "내 주요 건강 정보 요약 보기",
+    suggestedPrompt1: "퓨린 함량이 낮은 음식은 뭔가요?",
+    suggestedPrompt2: "통풍이 있는데 술을 마셔도 되나요?",
+    suggestedPrompt3: "통풍 발작이 왔을 때 어떻게 해야 하나요?",
+    addLogAria: "새 건강 기록 추가하기",
     
     // SymptomCheckinModal.tsx
     symptomCheckinTitle: "증상 기록",
@@ -161,27 +178,41 @@ const translations = {
     cancel: "취소",
     completeCheckin: "기록 완료",
     alertPainLocation: "통증 부위를 입력해주세요.",
+    recentLocations: "최근 통증 부위",
+    back: "이전",
+    next: "다음",
+    painLevelNone: "없음",
+    painLevelModerate: "중간",
+    painLevelSevere: "심함",
 
     // MedicationLogModal.tsx
     medicationLogTitle: "복용 기록",
     medicationNameLabel: "약 이름",
-    medicationNamePlaceholder: "예: 알로푸리놀 100mg, 콜히친",
+    medicationNamePlaceholder: "예: 알로푸리놀, 콜히친",
     timeOfDayLabel: "시간대",
     timeOfDayMorning: "아침",
     timeOfDayLunch: "점심",
     timeOfDayDinner: "저녁",
     timeOfDayBedtime: "취침 전",
     intakeTimeLabel: "복용 시간 (선택 사항)",
+    medicationNotesPlaceholder: "예: 식후 복용, 부작용 여부 등",
     alertMedicationName: "약 이름을 입력해주세요.",
     addPhoto: "사진 추가",
+    takePhoto: "사진 촬영",
+    chooseFromAlbum: "앨범에서 선택",
+    recentMedications: "최근 복용 약",
 
     // DietLogModal.tsx
     dietLogTitle: "식단 기록",
+    dietLogStep1Title: "무엇을 드셨나요?",
+    dietLogStep2Title: "언제 드셨나요?",
     foodDescriptionLabel: "음식/식사 설명",
     foodDescriptionPlaceholder: "예: 구운 연어, 찐 채소, 밥",
+    dietNotesPlaceholder: "예: 식후 느낌, 재료 등.",
     timeOfDayBreakfast: "아침",
     timeOfDayAfterDinner: "저녁 이후",
     alertFoodDescription: "음식 또는 식사 내용을 입력해주세요.",
+    recentMeals: "최근 식사",
 
     // HealthSummaryModal.tsx
     healthSummaryTitle: "내 건강 정보 요약",
@@ -214,9 +245,8 @@ const translations = {
 
     // Symptom Calendar
     symptomCalendarTitle: "기록 캘린더",
-    logTodaysSymptoms: "오늘 증상 기록",
-    logMedication: "복용 기록",
-    logDiet: "식단 기록",
+    logForToday: "오늘 기록하기",
+    logEntryFor: "기록하기",
     painLevelLegend: "통증 수준",
     month1: "1월", month2: "2월", month3: "3월", month4: "4월", month5: "5월", month6: "6월",
     month7: "7월", month8: "8월", month9: "9월", month10: "10월", month11: "11월", month12: "12월",
@@ -244,6 +274,10 @@ const translations = {
     personalizedAlertTitle: "개인화된 알림",
     forecastErrorRateLimit: "현재 요청이 많아 예보 서비스를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.",
     forecastErrorGeneral: "지금은 예보를 불러올 수 없습니다.",
+
+    // Pain Trend Chart
+    painTrendChartTitle: "통증 추이 (최근 30일)",
+    painTrendChartNoData: "통증 추이를 보려면 최소 2개 이상의 증상 기록이 필요합니다.",
   }
 };
 

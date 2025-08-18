@@ -6,7 +6,7 @@ GoutCare AI is a privacy-first, browser-based application designed to help indiv
 
 ![GoutCare AI Screenshot](https://storage.googleapis.com/aip-dev-user-uploads/user-46549a75-1025-4591-95fd-2e70b22a2c17/57a75225-b467-4389-8b01-b5866162153c.png)
 
-*The user interface features a unified Health Dashboard on the left for tracking symptoms, medication, and diet via a tabbed interface, and a conversational AI chat window on the right.*
+*The user interface features a health dashboard (left) with a personalized forecast and daily tips, a central calendar panel for logging and viewing pain trends, and a conversational AI chat window (right).*
 
 ---
 
@@ -20,15 +20,13 @@ GoutCare AI is a privacy-first, browser-based application designed to help indiv
   - **Multilingual:** Fully supports both English and Korean.
 
 - **Comprehensive Health Dashboard:**
-  - **Unified Log Calendar:** An interactive calendar to visualize all health logs. Displays distinct icons (symptoms, medication, diet) on days with entries.
-  - **Tabbed Interface:** Easily switch between Symptom, Medication, and Diet views to log new entries.
-  - **Personalized Gout Forecast:** The weekly forecast is personalized using a summary of your conversation history, including recent diet and medication logs, to provide a more accurate risk assessment.
-  - **Today's Tip:** A motivational widget that displays daily tips for gout management.
+  - **Personalized Gout Forecast & Today's Tip:** The left-hand dashboard panel provides a weekly gout forecast, personalized using your health summary, alongside a daily tip for gout management.
+  - **Unified Log Calendar & Pain Trend:** The central panel features an interactive calendar to log and visualize all health events. Below the calendar, a trend chart displays your pain levels over the last 30 days.
 
 - **Seamless Health Logging:**
   - **Symptom Logging:** Log pain location, pain level (0-10), associated symptoms (swelling, redness), and notes.
   - **Medication Logging:** Record medication name, time of day, intake time, notes, and an optional photo for AI analysis.
-  - **Diet Logging:** Log meals with a description, time of day, notes, and an optional photo for AI-powered purine analysis.
+  - **Diet Logging:** Log meals through a streamlined two-step process: first, describe the meal or add a photo; second, select the time of day and add any relevant notes.
   - **Automatic Chat Integration:** All logs are automatically formatted and sent to the chat, creating a continuous record that the AI can reference.
 
 - **Privacy-First Data Management:**
@@ -92,12 +90,16 @@ This project is a static web application and can be run using any simple local s
 ├── translations.ts               # i18n translations for EN/KO
 ├── types.ts                      # TypeScript type definitions
 ├── components/                   # Reusable React components
+│   ├── CalendarPanel.tsx
 │   ├── ChatWindow.tsx
 │   ├── DashboardPanel.tsx
 │   ├── DietLogModal.tsx
+│   ├── GoutForecast.tsx
 │   ├── HealthSummaryModal.tsx
 │   ├── IconComponents.tsx
+│   ├── LogSelectionModal.tsx
 │   ├── MedicationLogModal.tsx
+│   ├── PainTrendChart.tsx
 │   ├── SettingsModal.tsx
 │   └── SymptomCheckinModal.tsx
 ├── hooks/                        # Custom React hooks
@@ -105,7 +107,8 @@ This project is a static web application and can be run using any simple local s
 ├── services/                     # Services for external APIs
 │   └── geminiService.ts
 └── utils/                        # Utility functions
-    └── imageUtils.ts
+    ├── imageUtils.ts
+    └── parsers.ts
 ```
 
 ## 📄 License

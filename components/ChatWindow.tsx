@@ -1,19 +1,49 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { ChatMessage } from '../types';
-import { SendIcon, UserIcon, BotIcon, CogIcon, ClipboardIcon, LinkIcon, FileHeartIcon } from './IconComponents';
+import { SendIcon, UserIcon, BotIcon, CogIcon, PlusIcon, FileHeartIcon, PillIcon, UtensilsIcon, LinkIcon } from './IconComponents';
 import type { TranslationKey } from '../translations';
+
+interface SuggestedPromptsProps {
+  onPromptClick: (prompt: string) => void;
+  t: (key: TranslationKey) => string;
+}
+
+const SuggestedPrompts: React.FC<SuggestedPromptsProps> = ({ onPromptClick, t }) => {
+  const prompts: TranslationKey[] = ['suggestedPrompt1', 'suggestedPrompt2', 'suggestedPrompt3'];
+
+  return (
+    <div className="px-4 pb-2">
+      <div className="flex flex-wrap gap-2 justify-center">
+        {prompts.map((promptKey) => {
+          const promptText = t(promptKey);
+          return (
+            <button
+              key={promptKey}
+              onClick={() => onPromptClick(promptText)}
+              className="px-3 py-1.5 bg-zinc-700/80 text-zinc-300 rounded-full text-sm hover:bg-zinc-700 transition-colors"
+            >
+              {promptText}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 interface ChatWindowProps {
   messages: ChatMessage[];
   onSendMessage: (message: { text: string, image?: { mimeType: string, data: string }}) => void;
   isLoading: boolean;
   onOpenSettings: () => void;
-  onStartSymptomCheck: () => void;
+  onOpenLogModal: (type: 'symptom' | 'medication' | 'diet') => void;
   onShowSummary: () => void;
   t: (key: TranslationKey, substitutions?: Record<string, string | number>) => string;
+  showSuggestedPrompts: boolean;
 }
 
 const LoadingIndicator = () => (
@@ -55,7 +85,7 @@ const ChatMessageItem: React.FC<{ message: ChatMessage }> = ({ message }) => {
         </div>
       )}
       <div 
-        className={`max-w-xl p-4 rounded-xl shadow-md ${isUser ? 'bg-teal-600 rounded-br-none' : 'bg-zinc-700 rounded-bl-none'}`}
+        className={`max-w-xl p-4 rounded-xl shadow-md ${isUser ? 'bg-teal-600 rounded-br-none' : 'bg-zinc-800 rounded-bl-none'}`}
       >
         {message.image && (
           <div className="mb-3">
@@ -84,7 +114,7 @@ const ChatMessageItem: React.FC<{ message: ChatMessage }> = ({ message }) => {
         </div>
 
         {showFooter && (
-            <div className="mt-4 pt-3 border-t border-zinc-600">
+            <div className="mt-4 pt-3 border-t border-zinc-700">
                 {disclaimer && (
                     <p className={`text-xs text-zinc-400 italic ${message.sources && message.sources.length > 0 ? 'mb-3' : ''}`}>
                         {disclaimer}
@@ -123,10 +153,37 @@ const ChatMessageItem: React.FC<{ message: ChatMessage }> = ({ message }) => {
   );
 };
 
+const AddLogPopover: React.FC<{ onSelect: (type: 'symptom' | 'medication' | 'diet') => void; t: (key: TranslationKey) => string; }> = ({ onSelect, t }) => {
+    const options = [
+        { type: 'symptom' as const, key: 'symptomCheckinTitle' as const, Icon: FileHeartIcon, color: 'text-red-400', hover: 'hover:bg-red-900/40' },
+        { type: 'medication' as const, key: 'medicationLogTitle' as const, Icon: PillIcon, color: 'text-sky-400', hover: 'hover:bg-sky-900/40' },
+        { type: 'diet' as const, key: 'dietLogTitle' as const, Icon: UtensilsIcon, color: 'text-amber-400', hover: 'hover:bg-amber-900/40' }
+    ];
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ messages, onSendMessage, isLoading, onOpenSettings, onStartSymptomCheck, onShowSummary, t }) => {
+    return (
+        <div className="absolute bottom-full mb-3 w-56 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl overflow-hidden">
+            <div className="py-2">
+                {options.map(({ type, key, Icon, color, hover }) => (
+                    <button
+                        key={type}
+                        onClick={() => onSelect(type)}
+                        className={`w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-zinc-200 transition-colors ${hover}`}
+                    >
+                        <Icon className={`w-5 h-5 flex-shrink-0 ${color}`} />
+                        <span>{t(key)}</span>
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+
+const ChatWindow: React.FC<ChatWindowProps> = ({ messages, onSendMessage, isLoading, onOpenSettings, onOpenLogModal, onShowSummary, t, showSuggestedPrompts }) => {
   const [input, setInput] = useState('');
+  const [isLogPopoverOpen, setIsLogPopoverOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const logButtonRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -136,6 +193,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, onSendMessage, isLoad
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+        if (isLogPopoverOpen && logButtonRef.current && !logButtonRef.current.contains(event.target as Node)) {
+            setIsLogPopoverOpen(false);
+        }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isLogPopoverOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim() && !isLoading) {
@@ -144,19 +213,24 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, onSendMessage, isLoad
     }
   };
 
+  const handleLogSelect = (type: 'symptom' | 'medication' | 'diet') => {
+    setIsLogPopoverOpen(false);
+    onOpenLogModal(type);
+  }
+
   return (
-    <div className="flex flex-col h-full bg-zinc-800/50 rounded-lg shadow-2xl overflow-hidden">
-      <div className="flex items-center justify-between p-4 border-b border-zinc-700">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex items-center justify-between p-4 border-b border-zinc-800">
          <div className="text-sm">
-           <p className="font-bold text-zinc-200">{t('chatWindowTitle')}</p>
+           <p className="font-semibold text-zinc-200">{t('chatWindowTitle')}</p>
            <p className="text-zinc-400">{t('chatWindowSubtitle')}</p>
          </div>
         <div className="flex items-center gap-2">
-            <button onClick={onShowSummary} className="flex items-center gap-2 px-3 py-1.5 text-sm text-sky-300 bg-sky-900/50 rounded-md hover:bg-sky-900 transition-colors" title={t('myHealthSummaryAria')}>
+            <button onClick={onShowSummary} className="flex items-center gap-2 px-3 py-1.5 text-sm text-sky-400 bg-transparent border border-sky-800 rounded-lg hover:bg-sky-900/40 hover:text-sky-300 transition-colors" title={t('myHealthSummaryAria')}>
                 <FileHeartIcon className="w-4 h-4" />
                 {t('myHealthSummary')}
             </button>
-            <button onClick={onOpenSettings} className="flex items-center justify-center w-8 h-8 text-zinc-400 bg-zinc-700/50 rounded-full hover:bg-zinc-700 hover:text-zinc-200 transition-colors" title={t('settingsAria')}>
+            <button onClick={onOpenSettings} className="flex items-center justify-center w-8 h-8 text-zinc-400 bg-zinc-800/80 rounded-full hover:bg-zinc-700 hover:text-zinc-200 transition-colors" title={t('settingsAria')}>
                 <CogIcon className="w-5 h-5" />
             </button>
         </div>
@@ -171,7 +245,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, onSendMessage, isLoad
               <div className="w-8 h-8 flex-shrink-0 bg-zinc-700 rounded-full flex items-center justify-center">
                 <BotIcon className="w-5 h-5 text-teal-400" />
               </div>
-              <div className="max-w-xl p-4 rounded-xl shadow-md bg-zinc-700 rounded-bl-none">
+              <div className="max-w-xl p-4 rounded-xl shadow-md bg-zinc-800 rounded-bl-none">
                 <LoadingIndicator />
               </div>
             </div>
@@ -179,23 +253,32 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, onSendMessage, isLoad
         <div ref={messagesEndRef} />
       </div>
       
-      <div className="p-4 border-t border-zinc-700">
-        <form onSubmit={handleSubmit} className="flex items-center space-x-3">
-           <button
-            type="button"
-            onClick={onStartSymptomCheck}
-            disabled={isLoading}
-            className="flex-shrink-0 w-12 h-12 bg-zinc-700 rounded-full flex items-center justify-center text-zinc-300 transition-colors duration-200 disabled:bg-zinc-600 disabled:cursor-not-allowed hover:bg-zinc-600"
-            aria-label={t('symptomCheckinAria')}
-          >
-            <ClipboardIcon className="w-6 h-6" />
-          </button>
+      <div className="p-4 border-t border-zinc-800">
+        {showSuggestedPrompts && (
+            <SuggestedPrompts
+                onPromptClick={(text) => onSendMessage({ text })}
+                t={t}
+            />
+        )}
+        <form onSubmit={handleSubmit} className={`flex items-center space-x-3 ${showSuggestedPrompts ? 'mt-3' : ''}`}>
+          <div ref={logButtonRef} className="relative">
+            {isLogPopoverOpen && <AddLogPopover onSelect={handleLogSelect} t={t} />}
+            <button
+              type="button"
+              onClick={() => setIsLogPopoverOpen(prev => !prev)}
+              disabled={isLoading}
+              className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-zinc-300 transition-colors duration-200 disabled:cursor-not-allowed ${isLogPopoverOpen ? 'bg-zinc-600' : 'bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-700'}`}
+              aria-label={t('addLogAria')}
+            >
+              <PlusIcon className="w-6 h-6" />
+            </button>
+          </div>
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={t('inputPlaceholder')}
-            className="flex-1 w-full px-4 py-3 bg-zinc-700 border border-zinc-600 rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 text-zinc-100"
+            className="flex-1 w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 text-zinc-100"
             disabled={isLoading}
           />
           <button

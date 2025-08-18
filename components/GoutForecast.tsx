@@ -17,6 +17,23 @@ const weatherIconMap: { [key: string]: React.FC<{ className?: string }> } = {
   'Stormy': CloudLightningIcon,
 };
 
+// Helper function to safely encode UTF-8 strings to Base64. This version uses a robust,
+// cross-browser compatible method to handle Unicode characters correctly.
+const utf8ToBase64 = (str: string): string => {
+    try {
+        return btoa(
+            encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+                return String.fromCharCode(parseInt(p1, 16));
+            })
+        );
+    } catch (e) {
+        console.error("Failed to encode string to base64:", e);
+        // Return a simple hash as a fallback to prevent crashing.
+        return `fallback_${str.length}`;
+    }
+};
+
+
 const getIndexClasses = (index: string) => {
     switch (index) {
         case 'Good':
@@ -70,8 +87,8 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang, healthProfileSumma
       try {
         const location = coords ? { latitude: coords.latitude, longitude: coords.longitude } : undefined;
         
-        // Improved cache key using a hash of the health profile
-        const profileHash = healthProfileSummary ? btoa(healthProfileSummary).substring(0, 10) : 'none';
+        // Improved cache key using a safe base64 hash of the health profile
+        const profileHash = healthProfileSummary ? utf8ToBase64(healthProfileSummary).substring(0, 10) : 'none';
         const locationKeyPart = location ? `${location.latitude.toFixed(2)}_${location.longitude.toFixed(2)}` : 'generic';
         const cacheKey = `goutForecast_v7_${lang}_${locationKeyPart}_${profileHash}`;
         
@@ -80,7 +97,7 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang, healthProfileSumma
 
         if (cachedData) {
           const { timestamp, data } = JSON.parse(cachedData);
-          const cacheDuration = healthProfileSummary ? (1 * 60 * 60 * 1000) : (4 * 60 * 60 * 1000); // 1hr for personalized, 4hr for generic
+          const cacheDuration = healthProfileSummary ? (6 * 60 * 60 * 1000) : (12 * 60 * 60 * 1000); // 6hr for personalized, 12hr for generic
           if (now - timestamp < cacheDuration) {
             setForecastData(data);
             setLocationName(data.locationName);

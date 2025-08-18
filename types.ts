@@ -18,6 +18,7 @@ export type ChatMessage = {
 export type SymptomEntry = {
   date: Date;
   painLevel: number;
+  painLocation: string;
   summary: string;
 };
 
