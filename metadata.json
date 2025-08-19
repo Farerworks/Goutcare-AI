@@ -1,0 +1,7 @@
+{
+  "name": "GoutCare AI",
+  "description": "A specialized AI assistant for gout management. It uses built-in gout guidelines and saves conversation history on your device for a continuous, personalized, and private experience. Ask anything about gout, track your situation, and get informed answers. (Disclaimer: Not a substitute for professional medical advice).",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

@@ -1,0 +1,1260 @@
+--- START OF FILE index.tsx ---
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error("Could not find root element to mount to");
+}
+
+const root = ReactDOM.createRoot(rootElement);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+--- END OF FILE index.tsx ---
+--- START OF FILE metadata.json ---
+{
+  "name": "GoutCare AI",
+  "description": "A specialized AI assistant for gout management. It uses built-in gout guidelines and saves conversation history on your device for a continuous, personalized, and private experience. Ask anything about gout, track your situation, and get informed answers. (Disclaimer: Not a substitute for professional medical advice).",
+  "requestFramePermissions": []
+}
+--- END OF FILE metadata.json ---
+--- START OF FILE index.html ---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GoutCare AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js library and worker from CDN - Kept for potential future use, but not actively used now -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+      // Required to configure the worker for PDF.js to run in the browser
+      if (typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+      }
+    </script>
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.14.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
+    "react/": "https://esm.sh/react@^19.1.1/",
+    "react": "https://esm.sh/react@^19.1.1",
+    "react-markdown": "https://esm.sh/react-markdown@^9.0.1",
+    "remark-gfm": "https://esm.sh/remark-gfm@^4.0.0"
+  }
+}
+</script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
+--- END OF FILE index.html ---
+--- START OF FILE types.ts ---
+export type GroundingChunk = {
+  web: {
+      uri: string;
+      title: string;
+  }
+};
+
+export type ChatMessage = {
+  role: 'user' | 'model';
+  content: string;
+  sources?: GroundingChunk[];
+};
+
+export type SymptomEntry = {
+  date: Date;
+  painLevel: number;
+  summary: string;
+};
+--- END OF FILE types.ts ---
+--- START OF FILE services/geminiService.ts ---
+import { GoogleGenAI, type Content, type GenerateContentResponse } from "@google/genai";
+
+const API_KEY = process.env.API_KEY;
+
+if (!API_KEY) {
+    console.error("API_KEY not found. Please set the API_KEY environment variable.");
+}
+
+const ai = new GoogleGenAI({ apiKey: API_KEY! });
+
+const GOUT_GUIDELINES_CONTEXT_EN = `
+**Gout Management Guidelines (Summary)**
+
+1.  **What is Gout?** Gout is a type of inflammatory arthritis caused by the buildup of uric acid crystals in the joints, leading to sudden, severe attacks of pain, swelling, redness, and tenderness. High levels of uric acid in the blood (hyperuricemia) is the root cause.
+
+2.  **Dietary Recommendations:**
+    *   **Limit High-Purine Foods:** Red meat (beef, lamb), organ meats (liver, kidneys), and certain seafood (anchovies, sardines, mussels, scallops, trout, tuna).
+    *   **Limit Alcohol:** Beer and spirits are strongly associated with gout attacks. Wine in moderation is less risky.
+    *   **Limit Sugary Drinks & Foods:** High-fructose corn syrup can increase uric acid levels.
+    *   **Encourage:** Low-fat dairy products, vegetables, whole grains, and vitamin C. Staying well-hydrated by drinking plenty of water is crucial.
+
+3.  **Lifestyle Modifications:**
+    *   **Weight Management:** Gradual weight loss can significantly lower uric acid levels and reduce stress on joints.
+    *   **Regular Exercise:** Low-impact activities like walking, swimming, and cycling are beneficial.
+
+4.  **Managing Acute Attacks:**
+    *   Medications like NSAIDs (e.g., ibuprofen, naproxen), colchicine, or corticosteroids are used to reduce pain and inflammation.
+    *   Rest and elevate the affected joint. Apply ice packs.
+
+5.  **Long-Term Urate-Lowering Therapy (ULT):**
+    *   For patients with frequent attacks, tophi (uric acid crystal deposits), or joint damage.
+    *   Medications like Allopurinol, Febuxostat, or Probenecid are used to lower blood uric acid levels to a target of <6 mg/dL.
+    *   This is a long-term, often lifelong, treatment to prevent future attacks.
+
+6.  **User Data and Privacy:** The user's conversation history is stored on their device to maintain context and memory. It is not uploaded to any server.
+`;
+
+const GOUT_GUIDELINES_CONTEXT_KO = `
+**통풍 관리 지침 (요약)**
+
+1.  **통풍이란?** 통풍은 요산 결정이 관절에 쌓여 발생하는 염증성 관절염의 일종으로, 갑작스럽고 심한 통증, 부기, 발적, 압통을 유발합니다. 혈중 요산 수치가 높은 것(고요산혈증)이 근본 원인입니다.
+
+2.  **식이 요법 권장 사항:**
+    *   **고퓨린 식품 제한:** 붉은 고기(소고기, 양고기), 내장육(간, 신장), 특정 해산물(멸치, 정어리, 홍합, 가리비, 송어, 참치).
+    *   **알코올 제한:** 맥주와 증류주는 통풍 발작과 강한 연관이 있습니다. 와인은 적당히 마시면 위험이 덜합니다.
+    *   **단 음료 및 식품 제한:** 고과당 옥수수 시럽은 요산 수치를 높일 수 있습니다.
+    *   **권장 식품:** 저지방 유제품, 채소, 통곡물, 비타민 C. 물을 충분히 마셔 수분을 유지하는 것이 중요합니다.
+
+3.  **생활 습관 개선:**
+    *   **체중 관리:** 점진적인 체중 감량은 요산 수치를 크게 낮추고 관절에 가해지는 스트레스를 줄일 수 있습니다.
+    *   **규칙적인 운동:** 걷기, 수영, 자전거 타기와 같은 저강도 활동이 유익합니다.
+
+4.  **급성 발작 관리:**
+    *   NSAIDs(예: 이부프로펜, 나프록센), 콜히친 또는 코르티코스테로이드와 같은 약물을 사용하여 통증과 염증을 줄입니다.
+    *   영향을 받은 관절을 쉬게 하고 높이 올립니다. 얼음 찜질을 합니다.
+
+5.  **장기 요산 저하 요법 (ULT):**
+    *   잦은 발작, 통풍 결절(요산 결정 침전물) 또는 관절 손상이 있는 환자를 위한 것입니다.
+    *   알로푸리놀, 페북소스타트 또는 프로베네시드와 같은 약물을 사용하여 혈중 요산 수치를 6 mg/dL 미만으로 낮춥니다.
+    *   이는 향후 발작을 예방하기 위한 장기적인, 종종 평생의 치료입니다.
+
+6.  **사용자 데이터 및 개인 정보 보호:** 사용자의 대화 기록은 문맥과 기억을 유지하기 위해 사용자의 기기에 저장됩니다. 어떤 서버에도 업로드되지 않습니다.
+`;
+
+const getGuidelines = (lang: string): string => {
+    return lang === 'ko' ? GOUT_GUIDELINES_CONTEXT_KO : GOUT_GUIDELINES_CONTEXT_EN;
+}
+
+
+const systemInstruction_EN = `You are GoutCare AI, a highly specialized and cautious AI assistant. Your single and most critical function is to provide information about gout management by referencing the provided Gout Management Guidelines. You are not a doctor. Your knowledge is strictly and exclusively limited to the text of the guidelines provided below.
+
+**Core Directives & Absolute Rules:**
+
+1.  **Persona:** Act as a precise, cautious, and objective information provider. Your tone should be supportive and conversational, not robotic, prioritizing safety and accuracy above all else.
+
+2.  **Knowledge Scoping (Zero-Hallucination Mandate):**
+    *   **ABSOLUTE RULE:** Under NO circumstances are you to provide information that is not explicitly stated in the Gout Management Guidelines.
+    *   If a user's question cannot be answered directly from the guidelines, start your response naturally, for example: "From what I know based on the guidelines, there isn't specific information on that topic, but..." and then connect it to the most relevant information available.
+    *   **Proactive Assistance:** When information is absent from the guidelines, do not simply stop. Offer further assistance. For instance, you could help the user reason based on the available text (e.g., "Based on the guidelines, which describe gout as typically affecting limb joints, it's less likely to be the primary cause for back pain. Could there be another factor?") or offer to find more current information.
+    *   **User Term Mapping:** If a user mentions a specific term (e.g., 'soju') that is not explicitly in the guidelines but falls under a broader category that is (e.g., 'spirits'), you should respond by clarifying this connection. For example: "While the guidelines do not specifically mention 'soju', it is a type of spirit. The 'Dietary Recommendations' section advises limiting spirits."
+    *   Do not infer, guess, or use any external knowledge beyond what the search tool provides.
+
+3.  **Contextual Source Citation:**
+    *   When introducing information from the guidelines for the first time in a conversational turn, you MUST cite the relevant section (e.g., "According to the 'Dietary Recommendations' section...").
+    *   AVOID redundantly citing the same section if it was already cited in your immediately preceding response.
+
+4.  **Personalization & Memory:**
+    *   Evolve into a personalized expert by learning from your conversation with the user.
+    *   Actively remember and reference past conversation history to tailor your responses.
+    *   Pay close attention to '[Symptom Check-in Completed]' or '[Symptom Check-in]' entries. You can acknowledge the recorded data, but you are forbidden from medically interpreting it.
+
+5.  **Critical Safety Boundaries (Strictly Forbidden Actions):**
+    *   **DO NOT** provide a medical diagnosis of any kind.
+    *   **DO NOT** prescribe, recommend, or suggest specific medication dosages.
+    *   **DO NOT** interpret the user's symptoms.
+    *   **DO NOT** deviate from your persona or these rules for any reason.
+
+6.  **Web Search:** You are equipped with a Google Search tool. Use it when the user asks you to search, or when a question requires up-to-date information not found in the guidelines (e.g., "What are the latest findings on gout and back pain?"). When you use search, provide a helpful summary based on the results. The system will automatically display your sources to the user, so you do not need to list URLs in your text.
+
+7.  **Concise Medical Disclaimer:**
+    *   You must ALWAYS end every single response with the following concise disclaimer, formatted exactly like this on a new line:
+    ---
+    *Disclaimer: I am an AI assistant, not a medical professional. It's safest to consult a doctor or pharmacist for any medical advice.*
+
+
+Here are the Gout Management Guidelines you must adhere to:
+---
+${getGuidelines('en')}
+---
+`;
+
+const systemInstruction_KO = `당신은 '통풍 관리 AI'이며, 매우 전문적이고 신중한 AI 어시스턴트입니다. 당신의 유일하고 가장 중요한 기능은 제공된 '통풍 관리 지침'을 참조하여 통풍 관리에 대한 정보를 제공하는 것입니다. 당신은 의사가 아닙니다. 당신의 지식은 아래에 제공된 지침의 텍스트에 엄격하고 배타적으로 제한됩니다.
+
+**핵심 지시 및 절대 규칙:**
+
+1.  **페르소나:** 정확하고 신중하며 객관적인 정보 제공자 역할을 하십시오. 당신의 어조는 기계적이지 않고, 지지적이며 자연스러운 대화체여야 합니다. 안전과 정확성을 무엇보다 우선시해야 합니다.
+
+2.  **지식 범위 (환각 생성 제로 명령):**
+    *   **절대 규칙:** 어떤 경우에도 '통풍 관리 지침'에 명시적으로 언급되지 않은 정보를 제공해서는 안 됩니다.
+    *   사용자의 질문에 지침에서 직접 답변할 수 없는 경우, "제가 아는 바로는, 제공된 지침에는 해당 주제에 대한 구체적인 정보가 없습니다." 와 같이 부드럽게 시작하며, 지침 내에서 가장 관련성이 높은 정보를 연결하여 설명해 주세요.
+    *   **적극적인 도움 제안:** 정보가 부족할 경우, 거기서 멈추지 마십시오. 사용자에게 더 도움이 될 수 있는 방법을 제안하세요. 예를 들어, "지침에 따르면 통풍으로 인한 허리 통증은 일반적이지 않아 보입니다. 혹시 다른 원인이 있을 수 있을까요?" 와 같이 추론을 돕거나, 웹 검색을 제안할 수 있습니다. 사용자가 검색에 동의하면, 구글 검색 도구를 사용하여 답변을 제공해야 합니다.
+    *   **사용자 용어 매핑:** 사용자가 지침에 명시되지 않은 특정 용어(예: '소주')를 언급했지만, 지침에 포함된 더 넓은 카테고리(예: '증류주')에 해당하는 경우, 다음과 같이 응답하십시오: "지침에는 '소주'가 구체적으로 언급되어 있지 않지만, 이는 '증류주'의 일종입니다. '식이 요법 권장 사항' 섹션에서는 증류주 섭취를 제한하라고 조언합니다."
+    *   검색 도구가 제공하는 것 외에는 추론하거나, 추측하거나, 외부 지식을 사용하지 마십시오.
+
+3.  **문맥에 맞는 출처 인용:**
+    *   대화에서 처음으로 지침의 정보를 인용할 때는 관련 섹션을 언급해야 합니다. (예: "'식이 요법 권장 사항' 섹션에 따르면...")
+    *   바로 이전 답변에서 이미 언급한 섹션을 반복해서 인용하는 것은 피하여 대화를 자연스럽게 만드십시오.
+
+4.  **개인화 및 기억:**
+    *   사용자와의 대화를 통해 배우는 개인화된 전문가가 되십시오.
+    *   과거 대화 내용(이전 질문, 증상 기록 등)을 적극적으로 기억하고 참조하여 답변을 맞춤화하십시오.
+    *   '[증상 기록 완료]' 또는 '[증상 기록]' 항목에 세심한 주의를 기울이십시오. 기록된 데이터를 인정할 수는 있지만, 그것을 의학적으로 해석하는 것은 절대 금지됩니다.
+
+5.  **중요 안전 경계 (엄격히 금지된 행동):**
+    *   어떤 종류의 의학적 진단도 제공하지 **마십시오**.
+    *   특정 약물 복용량을 처방, 추천 또는 제안하지 **마십시오**.
+    *   사용자의 증상을 해석하지 **마십시오**.
+    *   어떤 이유로든 당신의 페르소나나 이 규칙에서 벗어나지 **마십시오**.
+
+6.  **웹 검색:** 당신은 구글 검색 도구를 사용할 수 있습니다. 사용자가 검색을 요청하거나, 지침에 없는 최신 정보가 필요한 질문(예: "통풍과 허리 통증에 대한 최신 연구 결과는?")에 이 도구를 사용하십시오. 검색 결과를 사용할 때는, 찾은 정보를 바탕으로 유용한 요약을 제공하세요. 시스템이 자동으로 정보 출처를 사용자에게 보여주므로, 답변에 직접 URL을 나열할 필요는 없습니다.
+
+7.  **간결한 의료 면책 조항:**
+    *   모든 응답은 반드시 다음의 간결한 면책 조항으로 끝나야 하며, 새 줄에 정확히 이 형식으로 작성해야 합니다:
+    ---
+    *면책 조항: 저는 의료 전문가가 아니므로, 의학적 조언은 의사나 약사와 상담하는 것이 가장 안전합니다.*
+
+사용자의 언어인 한국어로 응답해야 합니다.
+
+다음은 반드시 준수해야 할 통풍 관리 지침입니다:
+---
+${getGuidelines('ko')}
+---
+`;
+
+export const generateChatResponseStream = (history: Content[], lang: string = 'en'): Promise<AsyncGenerator<GenerateContentResponse>> => {
+    const instruction = lang === 'ko' ? systemInstruction_KO : systemInstruction_EN;
+
+    return ai.models.generateContentStream({
+        model: 'gemini-2.5-flash',
+        contents: history,
+        config: {
+            systemInstruction: instruction,
+            tools: [{ googleSearch: {} }],
+        }
+    });
+};
+--- END OF FILE services/geminiService.ts ---
+--- START OF FILE components/IconComponents.tsx ---
+import React from 'react';
+
+export const FileTextIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+    <line x1="10" y1="9" x2="8" y2="9" />
+  </svg>
+);
+
+export const FileIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+    <polyline points="14 2 14 8 20 8" />
+  </svg>
+);
+
+export const UploadCloudIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+    <path d="M12 12v9" />
+    <path d="m16 16-4-4-4 4" />
+  </svg>
+);
+
+export const SendIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <line x1="22" y1="2" x2="11" y2="13" />
+    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+  </svg>
+);
+
+export const UserIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+export const BotIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="3" y="11" width="18" height="10" rx="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    <path d="M12 5L12.01 5.01" />
+    <path d="M8 15h.01" />
+    <path d="M16 15h.01" />
+  </svg>
+);
+
+export const TrashIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M3 6h18" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+  </svg>
+);
+
+export const ClipboardIcon = ({ className }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+        <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+    </svg>
+);
+
+export const LightbulbIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 9 5c0 1.3.5 2.6 1.5 3.5.7.8 1.3 1.5 1.5 2.5" />
+    <path d="M9 18h6" />
+    <path d="M10 22h4" />
+  </svg>
+);
+
+export const ChevronLeftIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="m15 18-6-6 6-6" />
+  </svg>
+);
+
+export const ChevronRightIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="m9 18 6-6-6-6" />
+  </svg>
+);
+
+export const LinkIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"></path>
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"></path>
+  </svg>
+);
+--- END OF FILE components/IconComponents.tsx ---
+--- START OF FILE components/ChatWindow.tsx ---
+import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import type { ChatMessage } from '../types';
+import { SendIcon, UserIcon, BotIcon, TrashIcon, ClipboardIcon, LinkIcon } from './IconComponents';
+import type { TranslationKey } from '../translations';
+
+interface ChatWindowProps {
+  messages: ChatMessage[];
+  onSendMessage: (message: string) => void;
+  isLoading: boolean;
+  onClear: () => void;
+  onStartSymptomCheck: () => void;
+  t: (key: TranslationKey, substitutions?: Record<string, string | number>) => string;
+}
+
+const LoadingIndicator = () => (
+  <div className="flex items-center space-x-2">
+    <div className="w-2 h-2 bg-slate-400 rounded-full animate-pulse"></div>
+    <div className="w-2 h-2 bg-slate-400 rounded-full animate-pulse" style={{ animationDelay: '200ms' }}></div>
+    <div className="w-2 h-2 bg-slate-400 rounded-full animate-pulse" style={{ animationDelay: '400ms' }}></div>
+  </div>
+);
+
+const ChatMessageItem: React.FC<{ message: ChatMessage }> = ({ message }) => {
+  const isUser = message.role === 'user';
+  const Avatar = isUser ? UserIcon : BotIcon;
+  
+  return (
+    <div className={`flex items-start gap-3 my-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
+      {!isUser && (
+        <div className="w-8 h-8 flex-shrink-0 bg-slate-700 rounded-full flex items-center justify-center">
+          <Avatar className="w-5 h-5 text-sky-400" />
+        </div>
+      )}
+      <div 
+        className={`max-w-xl p-4 rounded-xl shadow-md ${isUser ? 'bg-sky-600 rounded-br-none' : 'bg-slate-700 rounded-bl-none'}`}
+      >
+        <div className="text-slate-50">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                p: ({node, ...props}) => <p {...props} className="mb-2 last:mb-0" />,
+                ul: ({node, ...props}) => <ul {...props} className="list-disc list-inside space-y-1 my-2" />,
+                ol: ({node, ...props}) => <ol {...props} className="list-decimal list-inside space-y-1 my-2" />,
+                a: ({node, ...props}) => <a {...props} className="text-sky-300 hover:underline" target="_blank" rel="noopener noreferrer" />,
+                h3: ({node, ...props}) => <h3 {...props} className="text-lg font-semibold mt-4 mb-2" />,
+                h4: ({node, ...props}) => <h4 {...props} className="text-md font-semibold mt-3 mb-1" />,
+                strong: ({node, ...props}) => <strong {...props} className="font-semibold" />,
+              }}
+            >
+              {message.content}
+            </ReactMarkdown>
+        </div>
+
+        {message.sources && message.sources.length > 0 && (
+          <div className="mt-4 pt-3 border-t border-slate-600">
+            <h4 className="text-xs font-semibold text-slate-300 mb-2">Sources:</h4>
+            <ul className="space-y-2">
+              {message.sources.map((source, index) => (
+                <li key={index} className="text-sm">
+                  <a
+                    href={source.web.uri}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sky-400 hover:text-sky-300 hover:underline"
+                    title={source.web.title || source.web.uri}
+                  >
+                    <LinkIcon className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{source.web.title || source.web.uri}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+      {isUser && (
+        <div className="w-8 h-8 flex-shrink-0 bg-slate-700 rounded-full flex items-center justify-center">
+          <Avatar className="w-5 h-5 text-slate-300" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+const ChatWindow: React.FC<ChatWindowProps> = ({ messages, onSendMessage, isLoading, onClear, onStartSymptomCheck, t }) => {
+  const [input, setInput] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (input.trim() && !isLoading) {
+      onSendMessage(input.trim());
+      setInput('');
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-slate-800/50 rounded-lg shadow-2xl overflow-hidden">
+      <div className="flex items-center justify-between p-4 border-b border-slate-700">
+         <div className="text-sm">
+           <p className="font-bold text-slate-200">{t('chatWindowTitle')}</p>
+           <p className="text-slate-400">{t('chatWindowSubtitle')}</p>
+         </div>
+        <button onClick={onClear} className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-400 bg-red-900/50 rounded-md hover:bg-red-900 transition-colors">
+            <TrashIcon className="w-4 h-4" />
+            {t('resetChat')}
+        </button>
+      </div>
+
+      <div className="flex-1 p-4 overflow-y-auto">
+        {messages.map((msg, index) => (
+          <ChatMessageItem key={index} message={msg} />
+        ))}
+        {isLoading && messages.length > 0 && messages[messages.length-1].role === 'user' && (
+            <div className="flex items-start gap-3 my-4 justify-start">
+              <div className="w-8 h-8 flex-shrink-0 bg-slate-700 rounded-full flex items-center justify-center">
+                <BotIcon className="w-5 h-5 text-sky-400" />
+              </div>
+              <div className="max-w-xl p-4 rounded-xl shadow-md bg-slate-700 rounded-bl-none">
+                <LoadingIndicator />
+              </div>
+            </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+      
+      <div className="p-4 border-t border-slate-700">
+        <form onSubmit={handleSubmit} className="flex items-center space-x-3">
+           <button
+            type="button"
+            onClick={onStartSymptomCheck}
+            disabled={isLoading}
+            className="flex-shrink-0 w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center text-slate-300 transition-colors duration-200 disabled:bg-slate-600 disabled:cursor-not-allowed hover:bg-slate-600"
+            aria-label={t('symptomCheckinAria')}
+          >
+            <ClipboardIcon className="w-6 h-6" />
+          </button>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={t('inputPlaceholder')}
+            className="flex-1 w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-100"
+            disabled={isLoading}
+          />
+          <button
+            type="submit"
+            disabled={isLoading || !input.trim()}
+            className="flex-shrink-0 w-12 h-12 bg-sky-600 rounded-full flex items-center justify-center text-white transition-colors duration-200 disabled:bg-slate-600 disabled:cursor-not-allowed hover:bg-sky-500"
+            aria-label={t('sendMessageAria')}
+          >
+            <SendIcon className="w-6 h-6" />
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default ChatWindow;
+--- END OF FILE components/ChatWindow.tsx ---
+--- START OF FILE App.tsx ---
+import React, { useState, useEffect, useCallback } from 'react';
+import type { Content } from '@google/genai';
+import type { ChatMessage, GroundingChunk } from './types';
+import { generateChatResponseStream } from './services/geminiService';
+import ChatWindow from './components/ChatWindow';
+import SymptomCheckinModal from './components/SymptomCheckinModal';
+import DashboardPanel from './components/DashboardPanel';
+import getTranslator, { type Language } from './translations';
+
+
+// Detect language once and get the translator function
+const lang: Language = navigator.language.split('-')[0] === 'ko' ? 'ko' : 'en';
+const t = getTranslator(lang);
+
+
+const App: React.FC = () => {
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    // Lazy initializer: Load messages from localStorage on initial render
+    try {
+      const savedMessages = localStorage.getItem('goutChatMessages');
+      if (savedMessages) {
+        return JSON.parse(savedMessages);
+      }
+      return [{ role: 'model', content: t('welcomeMessage') }];
+    } catch (error) {
+      console.error("Failed to parse messages from localStorage", error);
+      return [{ role: 'model', content: t('welcomeMessage') }];
+    }
+  });
+  const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
+  const [appError, setAppError] = useState<string | null>(null);
+  const [isSymptomModalOpen, setIsSymptomModalOpen] = useState(false);
+  const [selectedSymptomDate, setSelectedSymptomDate] = useState<Date | null>(null);
+
+
+  // Effect to set html lang attribute
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, []);
+
+  // Effect to save messages to localStorage whenever they change
+  useEffect(() => {
+    try {
+        localStorage.setItem('goutChatMessages', JSON.stringify(messages));
+    } catch (error) {
+        console.error("Failed to save messages to localStorage", error);
+        setAppError("Could not save your conversation. Your browser's storage might be full or disabled.");
+    }
+  }, [messages]);
+
+
+  const handleSendMessage = useCallback(async (message: string) => {
+    if (isAiLoading) return;
+
+    setIsAiLoading(true);
+    setAppError(null);
+    const userMessage: ChatMessage = { role: 'user', content: message };
+    
+    const currentMessages = [...messages, userMessage];
+    setMessages(currentMessages);
+    
+    try {
+      const history: Content[] = currentMessages
+        .filter(msg => msg.content) // Don't include empty messages in history
+        .map(msg => ({
+        role: msg.role,
+        parts: [{ text: msg.content }]
+      }));
+      
+      const stream = await generateChatResponseStream(history, lang);
+      
+      let modelResponseText = '';
+      const modelResponseSources: GroundingChunk[] = [];
+      // Add a placeholder for the model's response
+      setMessages(prev => [...prev, { role: 'model', content: '' }]);
+
+      for await (const chunk of stream) {
+        modelResponseText += chunk.text;
+        
+        const newSources = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks?.filter(c => c.web) || [];
+        if (newSources.length > 0) {
+            newSources.forEach(source => {
+                if (!modelResponseSources.some(s => s.web.uri === source.web.uri)) {
+                    modelResponseSources.push(source as GroundingChunk);
+                }
+            });
+        }
+        
+        setMessages(prev => {
+          const newMessages = [...prev];
+          const lastMessage = newMessages[newMessages.length - 1];
+          if(lastMessage.role === 'model') {
+             lastMessage.content = modelResponseText;
+             lastMessage.sources = modelResponseSources.length > 0 ? modelResponseSources : undefined;
+          }
+          return newMessages;
+        });
+      }
+
+    } catch (e: any) {
+      const errorMessage = `An error occurred: ${e.message}`;
+      setAppError(errorMessage);
+      // On error, remove the optimistic user message and the empty model placeholder, then add an error message
+      setMessages(prev => {
+          const newMessages = prev.slice(0, -2);
+          return [...newMessages, {role: 'model', content: `Sorry, I encountered an error. ${errorMessage}`}];
+      });
+    } finally {
+      setIsAiLoading(false);
+    }
+  }, [messages, isAiLoading, lang]);
+
+  const handleClear = () => {
+    setMessages([
+        {
+            role: 'model',
+            content: t('historyCleared')
+        }
+    ]);
+    setAppError(null);
+  };
+
+  const handleSymptomCheckComplete = (summary: string | null) => {
+    setIsSymptomModalOpen(false);
+    setSelectedSymptomDate(null);
+    if (summary) {
+      handleSendMessage(summary);
+    }
+  };
+
+  const openSymptomModal = (date: Date | null) => {
+    setSelectedSymptomDate(date || new Date());
+    setIsSymptomModalOpen(true);
+  };
+
+
+  return (
+    <>
+      <SymptomCheckinModal 
+        isOpen={isSymptomModalOpen}
+        onClose={() => {
+          setIsSymptomModalOpen(false);
+          setSelectedSymptomDate(null);
+        }}
+        onComplete={handleSymptomCheckComplete}
+        t={t}
+        selectedDate={selectedSymptomDate}
+      />
+      <div className="h-screen flex flex-col p-4 sm:p-6 lg:p-8 bg-slate-900">
+        <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col min-h-0">
+          <header className="text-center mb-6 flex-shrink-0">
+            <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-cyan-300">
+              {t('goutCareAI')}
+            </h1>
+            <p className="mt-2 text-slate-400">{t('appSubtitle')}</p>
+          </header>
+
+          <main className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 min-h-0 lg:grid-rows-1 grid-rows-[auto_1fr]">
+            <div className="lg:col-span-1 min-h-0">
+              <DashboardPanel
+                messages={messages}
+                onLogSymptom={(date) => openSymptomModal(date)}
+                t={t}
+              />
+            </div>
+
+            <div className="lg:col-span-2 min-h-0 flex flex-col">
+              {appError && (
+                <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg relative mb-4 flex-shrink-0" role="alert">
+                  <strong className="font-bold">{t('errorPrefix')}</strong>
+                  <span className="block sm:inline">{appError}</span>
+                  <button onClick={() => { setAppError(null); }} className="absolute top-0 bottom-0 right-0 px-4 py-3">
+                    <span className="text-2xl">{t('closeError')}</span>
+                  </button>
+                </div>
+              )}
+
+              <div className="flex-1 min-h-0">
+                  <ChatWindow
+                    messages={messages}
+                    onSendMessage={handleSendMessage}
+                    isLoading={isAiLoading}
+                    onClear={handleClear}
+                    onStartSymptomCheck={() => openSymptomModal(null)}
+                    t={t}
+                  />
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default App;
+--- END OF FILE App.tsx ---
+--- START OF FILE components/SymptomCheckinModal.tsx ---
+import React, { useState } from 'react';
+import type { TranslationKey } from '../translations';
+
+interface SymptomCheckinModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onComplete: (summary: string | null) => void;
+  t: (key: TranslationKey, substitutions?: Record<string, string | number>) => string;
+  selectedDate?: Date | null;
+}
+
+const symptomOptions = [
+  { value: 'Swelling', key: 'symptomSwelling' as const },
+  { value: 'Redness', key: 'symptomRedness' as const },
+  { value: 'Warmth/Heat', key: 'symptomWarmth' as const },
+];
+
+
+const SymptomCheckinModal: React.FC<SymptomCheckinModalProps> = ({ isOpen, onClose, onComplete, t, selectedDate }) => {
+  const [painLocation, setPainLocation] = useState('');
+  const [painLevel, setPainLevel] = useState(5);
+  const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [notes, setNotes] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleSymptomToggle = (symptom: string) => {
+    setSymptoms(prev =>
+      prev.includes(symptom)
+        ? prev.filter(s => s !== symptom)
+        : [...prev, symptom]
+    );
+  };
+
+  const handleSubmit = () => {
+    if (!painLocation.trim()) {
+        alert(t('alertPainLocation'));
+        return;
+    }
+    
+    const logDate = selectedDate || new Date();
+    const timestamp = logDate.toISOString(); 
+
+    let summary = `[${t('symptomCheckinTitle')} - ${timestamp}]\n`;
+    summary += `- ${t('painLocationLabel')}: ${painLocation}\n`;
+    summary += `- ${t('painLevelLabel', { painLevel: '' }).replace(': ', '').replace(':', '')}: ${painLevel}/10\n`;
+    if (symptoms.length > 0) {
+      const translatedSymptoms = symptoms.map(symptom => {
+            const option = symptomOptions.find(opt => opt.value === symptom);
+            return option ? t(option.key) : symptom;
+        }).join(', ');
+      summary += `- ${t('otherSymptomsLabel')}: ${translatedSymptoms}\n`;
+    }
+    if (notes.trim()) {
+      summary += `- ${t('notesLabel').replace(' (optional)', '').replace(' (선택 사항)', '')}: ${notes}`;
+    }
+    onComplete(summary.trim());
+    resetState();
+  };
+
+  const resetState = () => {
+    setPainLocation('');
+    setPainLevel(5);
+    setSymptoms([]);
+    setNotes('');
+  }
+
+  const handleClose = () => {
+    resetState();
+    onClose();
+  }
+  
+  const formattedDate = selectedDate ? new Intl.DateTimeFormat(undefined, {
+      year: 'numeric', month: 'long', day: 'numeric'
+  }).format(selectedDate) : null;
+
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={handleClose}>
+      <div className="bg-slate-800 rounded-lg shadow-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+        <h2 className="text-2xl font-bold text-sky-400 mb-2 text-center">{t('symptomCheckinTitle')}</h2>
+        {formattedDate && <p className="text-center text-slate-400 mb-4">{formattedDate}</p>}
+        
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="painLocation" className="block text-sm font-medium text-slate-300 mb-1">{t('painLocationLabel')}</label>
+            <input
+              type="text"
+              id="painLocation"
+              value={painLocation}
+              onChange={e => setPainLocation(e.target.value)}
+              placeholder={t('painLocationPlaceholder')}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="painLevel" className="block text-sm font-medium text-slate-300 mb-1">{t('painLevelLabel', { painLevel })}</label>
+            <input
+              type="range"
+              id="painLevel"
+              min="0"
+              max="10"
+              value={painLevel}
+              onChange={e => setPainLevel(parseInt(e.target.value))}
+              className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">{t('otherSymptomsLabel')}</label>
+            <div className="flex flex-wrap gap-2">
+              {symptomOptions.map(symptom => (
+                <button
+                  key={symptom.value}
+                  onClick={() => handleSymptomToggle(symptom.value)}
+                  className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                    symptoms.includes(symptom.value)
+                      ? 'bg-sky-600 text-white'
+                      : 'bg-slate-700 hover:bg-slate-600'
+                  }`}
+                >
+                  {t(symptom.key)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="notes" className="block text-sm font-medium text-slate-300 mb-1">{t('notesLabel')}</label>
+            <textarea
+              id="notes"
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              rows={3}
+              placeholder={t('notesPlaceholder')}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+            ></textarea>
+          </div>
+        </div>
+
+        <div className="mt-6 flex justify-end space-x-3">
+          <button onClick={handleClose} className="px-4 py-2 bg-slate-600 rounded-md hover:bg-slate-500 transition-colors">{t('cancel')}</button>
+          <button onClick={handleSubmit} className="px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors">{t('completeCheckin')}</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SymptomCheckinModal;
+--- END OF FILE components/SymptomCheckinModal.tsx ---
+--- START OF FILE translations.ts ---
+const translations = {
+  en: {
+    // App.tsx
+    goutCareAI: "GoutCare AI",
+    appSubtitle: "Your Personal Assistant for Gout Management, Grounded in Medical Guidelines",
+    initializing: "Initializing AI Assistant...",
+    welcomeMessage: "Hello! I am GoutCare AI. On the left, you can now find your Health Dashboard to track symptoms. How can I help you today?\n\nUse the 'Log Today's Symptoms' button or the clipboard icon to log your symptoms.",
+    historyCleared: "Conversation history cleared. How can I help you start fresh?",
+    errorPrefix: "Error: ",
+    closeError: "×",
+    dashboardTitle: "Health Dashboard",
+
+    // ChatWindow.tsx
+    chatWindowTitle: "GoutCare AI",
+    chatWindowSubtitle: "Your Personal Gout Assistant",
+    resetChat: "Reset Chat",
+    inputPlaceholder: "Ask about diet, symptoms, or management...",
+    symptomCheckinAria: "Symptom Check-in",
+    sendMessageAria: "Send message",
+
+    // SymptomCheckinModal.tsx
+    symptomCheckinTitle: "Symptom Check-in",
+    painLocationLabel: "Pain Location",
+    painLocationPlaceholder: "e.g., Right big toe, Left ankle",
+    painLevelLabel: "Pain Level: {painLevel}",
+    otherSymptomsLabel: "Other Symptoms",
+    symptomSwelling: "Swelling",
+    symptomRedness: "Redness",
+    symptomWarmth: "Warmth/Heat",
+    notesLabel: "Additional Notes (optional)",
+    notesPlaceholder: "e.g., Started after dinner, getting worse at night.",
+    cancel: "Cancel",
+    completeCheckin: "Complete Check-in",
+    alertPainLocation: "Please specify the pain location.",
+
+    // Tip of the Day
+    tipOfTheDayTitle: "Today's Tip",
+    tip1: "Stay hydrated! Drinking plenty of water helps your kidneys flush out uric acid.",
+    tip2: "Cherries, especially tart cherries, have been shown to lower uric acid levels and reduce gout attacks.",
+    tip3: "Limit high-purine foods like red meat and certain seafood to manage your uric acid levels.",
+    tip4: "Even light, regular exercise like walking or swimming can help manage weight and reduce stress on your joints.",
+    tip5: "Avoid sugary drinks, especially those with high-fructose corn syrup, as they can raise uric acid levels.",
+
+    // Symptom Calendar
+    symptomCalendarTitle: "Symptom Calendar",
+    logTodaysSymptoms: "Log Today's Symptoms",
+    painLevelLegend: "Pain Level",
+    month1: "January", month2: "February", month3: "March", month4: "April", month5: "May", month6: "June",
+    month7: "July", month8: "August", month9: "September", month10: "October", month11: "November", month12: "December",
+    daySun: "S", dayMon: "M", dayTue: "T", dayWed: "W", dayThu: "T", dayFri: "F", daySat: "S",
+  },
+  ko: {
+    // App.tsx
+    goutCareAI: "통풍 관리 AI",
+    appSubtitle: "의학 지침에 근거한 개인 통풍 관리 어시스턴트",
+    initializing: "AI 어시스턴트 초기화 중...",
+    welcomeMessage: "안녕하세요! 저는 통풍 관리 AI입니다. 이제 왼쪽에서 건강 대시보드를 통해 증상을 추적할 수 있습니다. 무엇을 도와드릴까요?\n\n'오늘 증상 기록' 버튼이나 클립보드 아이콘을 사용해 증상을 기록해 보세요.",
+    historyCleared: "대화 기록이 삭제되었습니다. 어떻게 새로 시작할까요?",
+    errorPrefix: "오류: ",
+    closeError: "×",
+    dashboardTitle: "건강 대시보드",
+
+    // ChatWindow.tsx
+    chatWindowTitle: "통풍 관리 AI",
+    chatWindowSubtitle: "개인 통풍 어시스턴트",
+    resetChat: "대화 초기화",
+    inputPlaceholder: "식단, 증상, 관리에 대해 질문하세요...",
+    symptomCheckinAria: "증상 기록",
+    sendMessageAria: "메시지 보내기",
+    
+    // SymptomCheckinModal.tsx
+    symptomCheckinTitle: "증상 기록",
+    painLocationLabel: "통증 부위",
+    painLocationPlaceholder: "예: 오른쪽 엄지발가락, 왼쪽 발목",
+    painLevelLabel: "통증 수준: {painLevel}",
+    otherSymptomsLabel: "기타 증상",
+    symptomSwelling: "부기",
+    symptomRedness: "붉어짐",
+    symptomWarmth: "열감",
+    notesLabel: "추가 메모 (선택 사항)",
+    notesPlaceholder: "예: 저녁 식사 후 시작됨, 밤에 악화됨.",
+    cancel: "취소",
+    completeCheckin: "기록 완료",
+    alertPainLocation: "통증 부위를 입력해주세요.",
+
+    // Tip of the Day
+    tipOfTheDayTitle: "오늘의 팁",
+    tip1: "수분을 충분히 섭취하세요! 물을 많이 마시면 신장이 요산을 배출하는 데 도움이 됩니다.",
+    tip2: "체리, 특히 타트 체리는 요산 수치를 낮추고 통풍 발작을 줄이는 것으로 나타났습니다.",
+    tip3: "붉은 고기나 특정 해산물과 같은 고퓨린 식품을 제한하여 요산 수치를 관리하세요.",
+    tip4: "걷기나 수영과 같은 가볍고 규칙적인 운동도 체중을 관리하고 관절의 스트레스를 줄이는 데 도움이 될 수 있습니다.",
+    tip5: "고과당 옥수수 시럽이 함유된 단 음료는 요산 수치를 높일 수 있으니 피하세요.",
+
+    // Symptom Calendar
+    symptomCalendarTitle: "증상 캘린더",
+    logTodaysSymptoms: "오늘 증상 기록",
+    painLevelLegend: "통증 수준",
+    month1: "1월", month2: "2월", month3: "3월", month4: "4월", month5: "5월", month6: "6월",
+    month7: "7월", month8: "8월", month9: "9월", month10: "10월", month11: "11월", month12: "12월",
+    daySun: "일", dayMon: "월", dayTue: "화", dayWed: "수", dayThu: "목", dayFri: "금", daySat: "토",
+  }
+};
+
+export type Language = keyof typeof translations;
+export type TranslationKey = keyof typeof translations['en'] | keyof typeof translations['ko'];
+
+const getTranslator = (lang: Language) => {
+  const selectedLang = translations[lang] ? lang : 'en';
+  const languageMap = translations[selectedLang];
+
+  return (key: TranslationKey, substitutions?: Record<string, string | number>): string => {
+    let translation = (languageMap as any)[key] || (translations.en as any)[key];
+    if (substitutions) {
+        Object.entries(substitutions).forEach(([k, v]) => {
+            translation = translation.replace(`{${k}}`, String(v));
+        });
+    }
+    return translation;
+  };
+};
+
+export default getTranslator;
+--- END OF FILE translations.ts ---
+--- START OF FILE components/DashboardPanel.tsx ---
+import React, { useState, useMemo, useEffect } from 'react';
+import type { ChatMessage, SymptomEntry } from '../types';
+import type { TranslationKey } from '../translations';
+import { LightbulbIcon, ChevronLeftIcon, ChevronRightIcon } from './IconComponents';
+
+// --- UTILITY: PARSE SYMPTOM DATA ---
+const parseSymptomMessages = (messages: ChatMessage[]): SymptomEntry[] => {
+    const entries: SymptomEntry[] = [];
+    const painLevelRegex = /(Pain Level|통증 수준):\s*(\d+)\/10/;
+
+    for (const message of messages) {
+        if (message.role === 'user' && (message.content.startsWith('[Symptom Check-in') || message.content.startsWith('[증상 기록'))) {
+            try {
+                const content = message.content;
+                const dateMatch = content.match(/\[(?:Symptom Check-in|증상 기록)\s*-\s*(.+)\]/);
+                if (!dateMatch || !dateMatch[1]) continue;
+
+                const date = new Date(dateMatch[1]);
+                if (isNaN(date.getTime())) continue;
+
+                const painMatch = content.match(painLevelRegex);
+                const painLevel = painMatch && painMatch[2] ? parseInt(painMatch[2], 10) : 0;
+
+                entries.push({ date, painLevel, summary: content });
+            } catch (e) {
+                console.error("Failed to parse symptom message:", message.content, e);
+            }
+        }
+    }
+    return entries;
+};
+
+const getPainColor = (level: number) => {
+    if (level >= 9) return 'bg-red-500';
+    if (level >= 7) return 'bg-orange-500';
+    if (level >= 4) return 'bg-yellow-500';
+    return 'bg-green-500';
+};
+
+
+// --- SUB-COMPONENT: TIP OF THE DAY ---
+const tipKeys: TranslationKey[] = ['tip1', 'tip2', 'tip3', 'tip4', 'tip5'];
+
+const TipOfTheDay: React.FC<{ t: (key: TranslationKey) => string }> = ({ t }) => {
+  const [tipKey, setTipKey] = useState<TranslationKey | null>(null);
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * tipKeys.length);
+    setTipKey(tipKeys[randomIndex]);
+  }, []);
+
+  if (!tipKey) return null;
+
+  return (
+    <div className="bg-slate-800 rounded-lg p-4">
+      <h3 className="flex items-center text-md font-semibold text-amber-300 mb-2">
+        <LightbulbIcon className="w-5 h-5 mr-2 flex-shrink-0" />
+        {t('tipOfTheDayTitle')}
+      </h3>
+      <p className="text-sm text-slate-300">{t(tipKey)}</p>
+    </div>
+  );
+};
+
+
+// --- SUB-COMPONENT: SYMPTOM CALENDAR (FULL VIEW) ---
+const SymptomCalendar: React.FC<{
+    symptomDataByDate: Map<string, SymptomEntry[]>,
+    onLogSymptom: (date: Date) => void,
+    t: (key: TranslationKey, substitutions?: Record<string, string | number>) => string
+}> = ({ symptomDataByDate, onLogSymptom, t }) => {
+    const [currentDate, setCurrentDate] = useState(new Date());
+
+    const changeMonth = (offset: number) => {
+        setCurrentDate(prev => {
+            const newDate = new Date(prev);
+            newDate.setMonth(newDate.getMonth() + offset);
+            return newDate;
+        });
+    };
+
+    const renderHeader = () => {
+        const monthName = t(`month${currentDate.getMonth() + 1}` as TranslationKey);
+        return (
+            <div className="flex items-center justify-between mb-4">
+                <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-slate-700"><ChevronLeftIcon className="w-5 h-5" /></button>
+                <h3 className="font-semibold text-lg">{monthName} {currentDate.getFullYear()}</h3>
+                <button onClick={() => changeMonth(1)} className="p-2 rounded-full hover:bg-slate-700"><ChevronRightIcon className="w-5 h-5" /></button>
+            </div>
+        );
+    };
+
+    const renderDays = () => {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const dayHeaders = ['daySun', 'dayMon', 'dayTue', 'dayWed', 'dayThu', 'dayFri', 'daySat'];
+        
+        const blanks = Array(firstDayOfMonth).fill(null);
+        const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+        return (
+            <>
+                <div className="grid grid-cols-7 text-center text-xs text-slate-400 mb-2">
+                    {dayHeaders.map(day => <div key={day}>{t(day as TranslationKey)}</div>)}
+                </div>
+                <div className="grid grid-cols-7 text-center text-sm">
+                    {blanks.map((_, i) => <div key={`blank-${i}`}></div>)}
+                    {days.map(day => {
+                        const dayDate = new Date(year, month, day);
+                        const dayKey = dayDate.toISOString().split('T')[0];
+                        const entries = symptomDataByDate.get(dayKey);
+                        const today = new Date();
+                        const isToday = today.toDateString() === dayDate.toDateString();
+                        
+                        const highestPainEntry = entries?.reduce((max, entry) => entry.painLevel > max.painLevel ? entry : max, entries[0]);
+
+                        return (
+                             <div key={day} className="relative p-1">
+                                <button 
+                                    onClick={() => onLogSymptom(dayDate)}
+                                    className={`relative w-8 h-8 flex items-center justify-center rounded-full mx-auto transition-colors hover:bg-slate-700 ${isToday ? 'bg-sky-700 font-bold' : ''}`}
+                                    aria-label={`Log symptom for ${dayDate.toLocaleDateString()}`}
+                                >
+                                    <span>{day}</span>
+                                    {highestPainEntry && (
+                                        <div className="group absolute bottom-0 right-0 transform translate-x-1/4 translate-y-1/4">
+                                            <div className={`w-3 h-3 rounded-full border-2 border-slate-800 ${getPainColor(highestPainEntry.painLevel)}`}></div>
+                                            <div className="absolute bottom-full mb-2 w-64 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700 text-slate-200 p-2 rounded-lg text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-left whitespace-pre-wrap">
+                                                <strong className="font-bold">{t('painLevelLegend')}: {highestPainEntry.painLevel}/10</strong>
+                                                <hr className="border-slate-600 my-1"/>
+                                                {entries!.map(e => e.summary).join('\n---\n')}
+                                            </div>
+                                        </div>
+                                    )}
+                                </button>
+                            </div>
+                        );
+                    })}
+                </div>
+            </>
+        );
+    };
+
+    return (
+        <div className="bg-slate-800 rounded-lg p-4 flex-1 flex flex-col min-h-0">
+            <h3 className="text-md font-semibold text-slate-200 mb-2">{t('symptomCalendarTitle')}</h3>
+            {renderHeader()}
+            <div className="flex-1 overflow-y-auto">
+                 {renderDays()}
+            </div>
+            <div className="mt-4 pt-4 border-t border-slate-700 flex flex-col items-center">
+                 <div className="flex items-center space-x-4 text-xs text-slate-400">
+                    <span>{t('painLevelLegend')}:</span>
+                    <span className="flex items-center"><div className="w-3 h-3 rounded-full bg-green-500 mr-1"></div>1-3</span>
+                    <span className="flex items-center"><div className="w-3 h-3 rounded-full bg-yellow-500 mr-1"></div>4-6</span>
+                    <span className="flex items-center"><div className="w-3 h-3 rounded-full bg-orange-500 mr-1"></div>7-8</span>
+                    <span className="flex items-center"><div className="w-3 h-3 rounded-full bg-red-500 mr-1"></div>9-10</span>
+                </div>
+                <button 
+                    onClick={() => onLogSymptom(new Date())}
+                    className="mt-4 w-full bg-sky-600 text-white font-bold py-2 px-4 rounded-md hover:bg-sky-500 transition-colors"
+                >
+                    {t('logTodaysSymptoms')}
+                </button>
+            </div>
+        </div>
+    );
+};
+
+
+// --- SUB-COMPONENT: SYMPTOM CALENDAR (WEEK VIEW FOR MOBILE) ---
+const SymptomWeekView: React.FC<{
+    symptomDataByDate: Map<string, SymptomEntry[]>,
+    onLogSymptom: (date: Date) => void,
+    t: (key: TranslationKey) => string
+}> = ({ symptomDataByDate, onLogSymptom, t }) => {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay()); // Week starts on Sunday
+
+    const weekDates = Array.from({ length: 7 }).map((_, i) => {
+        const date = new Date(startOfWeek);
+        date.setDate(startOfWeek.getDate() + i);
+        return date;
+    });
+    
+    const dayHeaders = ['daySun', 'dayMon', 'dayTue', 'dayWed', 'dayThu', 'dayFri', 'daySat'];
+
+    return (
+        <div className="bg-slate-800 rounded-lg p-3">
+            <h3 className="text-md font-semibold text-slate-200 mb-3">{t('symptomCalendarTitle')}</h3>
+            <div className="grid grid-cols-7 gap-1 text-center">
+                {weekDates.map((date, index) => {
+                    const dayKey = date.toISOString().split('T')[0];
+                    const entries = symptomDataByDate.get(dayKey);
+                    const highestPainEntry = entries?.reduce((max, entry) => entry.painLevel > max.painLevel ? entry : max, entries[0]);
+                    const isToday = date.toDateString() === today.toDateString();
+
+                    return (
+                        <button 
+                            key={dayKey} 
+                            onClick={() => onLogSymptom(date)}
+                            className="flex flex-col items-center p-1 rounded-md hover:bg-slate-700 transition-colors"
+                            aria-label={`Log symptom for ${date.toLocaleDateString()}`}
+                        >
+                            <span className="text-xs text-slate-400">{t(dayHeaders[index] as TranslationKey)}</span>
+                            <span className={`relative mt-1 w-8 h-8 flex items-center justify-center rounded-full text-sm ${isToday ? 'bg-sky-700 font-bold' : ''}`}>
+                                {date.getDate()}
+                                {highestPainEntry && (
+                                    <span className={`absolute bottom-0 right-0 block w-2.5 h-2.5 rounded-full border-2 border-slate-800 ${getPainColor(highestPainEntry.painLevel)}`}></span>
+                                )}
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+
+// --- MAIN COMPONENT: DASHBOARD PANEL ---
+interface DashboardPanelProps {
+  messages: ChatMessage[];
+  onLogSymptom: (date: Date) => void;
+  t: (key: TranslationKey, substitutions?: Record<string, string | number>) => string;
+}
+
+const DashboardPanel: React.FC<DashboardPanelProps> = ({ messages, onLogSymptom, t }) => {
+    const symptomDataByDate = useMemo(() => {
+        const parsedEntries = parseSymptomMessages(messages);
+        const map = new Map<string, SymptomEntry[]>();
+        for (const entry of parsedEntries) {
+            const dayKey = entry.date.toISOString().split('T')[0];
+            if (!map.has(dayKey)) {
+                map.set(dayKey, []);
+            }
+            map.get(dayKey)!.push(entry);
+        }
+        return map;
+    }, [messages]);
+
+  return (
+    <div className="bg-slate-800/50 rounded-lg shadow-2xl lg:p-6 p-3 h-full flex flex-col gap-6 overflow-y-auto">
+      <h2 className="text-xl font-bold text-sky-400 flex-shrink-0 border-b border-slate-700 pb-2">{t('dashboardTitle')}</h2>
+      
+      {/* --- Mobile View --- */}
+      <div className="lg:hidden">
+          <SymptomWeekView symptomDataByDate={symptomDataByDate} onLogSymptom={onLogSymptom} t={t} />
+      </div>
+
+      {/* --- Desktop View --- */}
+      <div className="hidden lg:flex flex-shrink-0">
+        <TipOfTheDay t={t} />
+      </div>
+      <div className="hidden lg:flex flex-grow flex-col min-h-0">
+        <SymptomCalendar 
+            symptomDataByDate={symptomDataByDate} 
+            onLogSymptom={onLogSymptom} 
+            t={t} 
+        />
+      </div>
+    </div>
+  );
+};
+
+export default DashboardPanel;
+--- END OF FILE components/DashboardPanel.tsx ---
