@@ -111,7 +111,7 @@ const App: React.FC = () => {
             role: msg.role,
             parts: [{ text: msg.content }]
         }));
-        const summary = await summarizeHealthInfo(history, lang);
+        const summary = await summarizeHealthInfo(messages);
         setHealthProfileSummary(summary);
     } catch (e: any) {
         console.error("Failed to update health summary in background", e);
@@ -333,7 +333,7 @@ const App: React.FC = () => {
             role: msg.role,
             parts: [{ text: msg.content }]
         }));
-        const summary = await summarizeHealthInfo(history, lang);
+        const summary = await summarizeHealthInfo(messages);
         const finalSummary = summary || t('noSummaryFound');
         setHealthSummary(finalSummary);
         setSummaryCache({ key: cacheKey, summary: finalSummary });

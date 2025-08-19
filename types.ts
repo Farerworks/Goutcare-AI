@@ -1,3 +1,7 @@
+// Translation types
+export type TranslationKey = string;
+export type Language = 'ko' | 'en';
+
 export type GroundingChunk = {
   web: {
       uri: string;

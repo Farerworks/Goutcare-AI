@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { MedicalRecordEntry, TranslationKey } from '../types';
 import { fileToBase64 } from '../utils/imageUtils';
-import { CameraIcon, ImageIcon, XIcon } from './IconComponents';
+import { ImageIcon, XIcon } from './IconComponents';
 
 interface MedicalRecordManagerProps {
   isOpen: boolean;
@@ -57,7 +57,7 @@ const MedicalRecordManager: React.FC<MedicalRecordManagerProps> = ({
 
     // Create previews for images
     const newPreviews = await Promise.all(
-      files.map(file => {
+      files.map((file: File) => {
         return new Promise<string>((resolve) => {
           if (file.type.startsWith('image/')) {
             const reader = new FileReader();
@@ -74,8 +74,8 @@ const MedicalRecordManager: React.FC<MedicalRecordManagerProps> = ({
   };
 
   const removeAttachment = (index: number) => {
-    const newAttachments = attachments.filter((_, i) => i !== index);
-    const newPreviews = attachmentPreviews.filter((_, i) => i !== index);
+    const newAttachments = attachments.filter((_: File, i: number) => i !== index);
+    const newPreviews = attachmentPreviews.filter((_: string, i: number) => i !== index);
     setAttachments(newAttachments);
     setAttachmentPreviews(newPreviews);
   };
@@ -83,7 +83,7 @@ const MedicalRecordManager: React.FC<MedicalRecordManagerProps> = ({
   const handleSubmit = async () => {
     // Convert attachments to base64
     const attachmentData = await Promise.all(
-      attachments.map(async (file) => ({
+      attachments.map(async (file: File) => ({
         mimeType: file.type,
         data: await fileToBase64(file),
         fileName: file.name
@@ -220,7 +220,7 @@ const MedicalRecordManager: React.FC<MedicalRecordManagerProps> = ({
           {/* Attachment Previews */}
           {attachments.length > 0 && (
             <div className="mt-3 grid grid-cols-3 gap-2">
-              {attachments.map((file, idx) => (
+              {attachments.map((file: File, idx: number) => (
                 <div key={idx} className="relative group">
                   {attachmentPreviews[idx] ? (
                     <img
