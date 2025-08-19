@@ -66,8 +66,8 @@ const getIndexClasses = (index: string) => {
             };
         default:
             return {
-                bg: 'bg-zinc-700',
-                text: 'text-zinc-300',
+                bg: 'bg-slate-700',
+                text: 'text-slate-300',
                 labelKey: null
             };
     }
@@ -175,28 +175,28 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang, healthProfileSumma
   }, [lang, t, healthProfileSummary]);
   
   const renderSkeleton = () => (
-     <div className="bg-zinc-800 rounded-lg p-4 animate-pulse">
-        <div className="h-5 bg-zinc-700 rounded-md w-1/2 mb-1"></div>
-        <div className="h-3 bg-zinc-700 rounded-md w-1/3 mb-4"></div>
+     <div className="bg-slate-800/80 rounded-lg p-4 animate-pulse">
+        <div className="h-5 bg-slate-700 rounded-md w-1/2 mb-1"></div>
+        <div className="h-3 bg-slate-700 rounded-md w-1/3 mb-4"></div>
 
         <div className="flex justify-between items-center text-center">
             {Array.from({ length: 7 }).map((_, i) => (
                 <div key={i} className="flex flex-col items-center space-y-2">
-                    <div className="h-4 bg-zinc-700 rounded w-8"></div>
-                    <div className="w-8 h-8 bg-zinc-700 rounded-full"></div>
-                    <div className="h-3 bg-zinc-700 rounded w-10"></div>
+                    <div className="h-4 bg-slate-700 rounded w-8"></div>
+                    <div className="w-8 h-8 bg-slate-700 rounded-full"></div>
+                    <div className="h-3 bg-slate-700 rounded w-10"></div>
                 </div>
             ))}
         </div>
-        <div className="mt-4 pt-4 border-t border-zinc-700/50 flex flex-col gap-3">
+        <div className="mt-4 pt-4 border-t border-slate-700/50 flex flex-col gap-3">
             {Array.from({ length: 2 }).map((_, i) => (
                  <div key={i}>
-                    <div className="h-4 bg-zinc-700 rounded w-1/4 mb-2"></div>
-                    <div className="bg-zinc-900/50 p-3 rounded-lg flex items-start gap-4 min-h-[80px]">
-                        <div className="h-10 bg-zinc-700 rounded w-20 flex-shrink-0 mt-1"></div>
+                    <div className="h-4 bg-slate-700 rounded w-1/4 mb-2"></div>
+                    <div className="bg-slate-900/50 p-3 rounded-lg flex items-start gap-4 min-h-[80px]">
+                        <div className="h-10 bg-slate-700 rounded w-20 flex-shrink-0 mt-1"></div>
                         <div className="flex flex-col gap-2 w-full pt-1">
-                            <div className="h-3 bg-zinc-700 rounded w-full"></div>
-                            <div className="h-3 bg-zinc-700 rounded w-2/3"></div>
+                            <div className="h-3 bg-slate-700 rounded w-full"></div>
+                            <div className="h-3 bg-slate-700 rounded w-2/3"></div>
                         </div>
                     </div>
                 </div>
@@ -211,7 +211,7 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang, healthProfileSumma
 
   if (error || !forecastData || !forecastData.forecast || forecastData.forecast.length < 2) {
     return (
-      <div className="bg-zinc-800 rounded-lg p-4 text-center text-red-400">
+      <div className="bg-slate-800/80 rounded-lg p-4 text-center text-red-400">
         <p>{error || t('forecastErrorGeneral')}</p>
       </div>
     );
@@ -222,23 +222,23 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang, healthProfileSumma
 
   const DetailCard: React.FC<{ title: string, data: GoutForecastDay }> = ({ title, data }) => (
     <div>
-        <h4 className="text-sm font-semibold text-zinc-300 mb-1">{title}</h4>
-        <div className="bg-zinc-900/50 p-3 rounded-lg flex items-start gap-4">
+        <h4 className="text-sm font-semibold text-slate-300 mb-1">{title}</h4>
+        <div className="bg-slate-900/70 p-3 rounded-lg flex items-start gap-4">
             <div className={`text-5xl font-bold flex-shrink-0 w-20 text-center ${getIndexClasses(data.goutIndex).text}`}>
                 {new Intl.NumberFormat(lang).format(data.goutIndexNumeric)}
             </div>
-            <p className="text-sm text-zinc-400 pt-1">{data.explanation}</p>
+            <p className="text-sm text-slate-400 pt-1">{data.explanation}</p>
         </div>
     </div>
   );
   
   return (
-    <div className="bg-zinc-800 rounded-lg p-4">
+    <div className="bg-slate-800/80 rounded-lg p-4">
       <h3 className="flex items-center text-md font-semibold text-sky-300 mb-1">
         <TrendingUpIcon className="w-5 h-5 mr-2 flex-shrink-0" />
         {t('goutForecastTitle')}
       </h3>
-      <p className="text-xs text-zinc-400 mb-3">{locationName}</p>
+      <p className="text-xs text-slate-400 mb-3">{locationName}</p>
       
       {locationError && (
         <div className="bg-amber-900/50 border border-amber-700 text-amber-300 text-xs px-3 py-2 rounded-md mb-3 flex items-center justify-between" role="alert">
@@ -267,8 +267,8 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang, healthProfileSumma
 
             return (
                 <div key={index} className="flex flex-col items-center space-y-1 w-12 group" title={day.explanation}>
-                    <p className={`text-sm font-semibold ${index === 0 ? 'text-teal-300' : 'text-zinc-300'}`}>{dayName}</p>
-                    <WeatherIcon className="w-8 h-8 text-zinc-400 my-1 group-hover:scale-110 transition-transform" />
+                    <p className={`text-sm font-semibold ${index === 0 ? 'text-teal-300' : 'text-slate-300'}`}>{dayName}</p>
+                    <WeatherIcon className="w-8 h-8 text-slate-400 my-1 group-hover:scale-110 transition-transform" />
                     <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${bg} ${text}`}>
                         {labelKey ? t(labelKey) : day.goutIndex}
                     </span>
@@ -277,7 +277,7 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang, healthProfileSumma
         })}
       </div>
 
-      <div className="mt-4 pt-4 border-t border-zinc-700 flex flex-col gap-3">
+      <div className="mt-4 pt-4 border-t border-slate-700 flex flex-col gap-3">
         {forecastData.personalizedAlert && (
             <div className="p-3 bg-sky-900/50 border border-sky-800 rounded-lg flex items-start gap-3 mb-2">
                 <FileHeartIcon className="w-5 h-5 text-sky-400 flex-shrink-0 mt-0.5" />

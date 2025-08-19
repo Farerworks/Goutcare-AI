@@ -4,10 +4,14 @@ const translations = {
     appSubtitle: "Your Personal Assistant for Gout Management, Grounded in Medical Guidelines",
     initializing: "Initializing AI Assistant...",
     welcomeMessage: "Hello! I am GoutCare AI. On the left is your Health Dashboard, and on the right is our chat. You can log symptoms, medications, or meals using the calendar, or ask me anything about gout management. How can I assist you today?",
+    welcomeMessageNew: "Hello! I am GoutCare AI. You can ask me anything about gout, or use the '+' button to log symptoms, medications, or meals. Use the tabs above to view your dashboard or calendar. How can I assist you today?",
     historyCleared: "Conversation history cleared. How can I help you start fresh?",
     errorPrefix: "Error: ",
     closeError: "×",
     dashboardTitle: "Health Dashboard",
+    tabChat: "Chat",
+    tabDashboard: "Dashboard",
+    tabCalendar: "Calendar",
 
     // ChatWindow.tsx
     chatWindowTitle: "GoutCare AI",
@@ -144,11 +148,15 @@ const translations = {
     appSubtitle: "의학 지침에 근거한 개인 통풍 관리 어시스턴트",
     initializing: "AI 어시스턴트 초기화 중...",
     welcomeMessage: "안녕하세요! 저는 통풍 관리 AI입니다. 왼쪽은 건강 대시보드, 오른쪽은 채팅 공간입니다. 캘린더를 사용해 증상, 약, 식단을 기록하거나, 통풍 관리에 대해 무엇이든 질문해 보세요. 무엇을 도와드릴까요?",
+    welcomeMessageNew: "안녕하세요! 저는 통풍 관리 AI입니다. 통풍에 대해 질문하시거나 '+' 버튼으로 증상, 약, 식단을 기록해 보세요. 상단 탭으로 대시보드와 캘린더를 확인할 수 있습니다. 무엇을 도와드릴까요?",
     historyCleared: "대화 기록이 삭제되었습니다. 어떻게 새로 시작할까요?",
     errorPrefix: "오류: ",
     closeError: "×",
     dashboardTitle: "건강 대시보드",
-
+    tabChat: "채팅",
+    tabDashboard: "대시보드",
+    tabCalendar: "캘린더",
+    
     // ChatWindow.tsx
     chatWindowTitle: "GoutCare AI",
     chatWindowSubtitle: "개인 통풍 어시스턴트",

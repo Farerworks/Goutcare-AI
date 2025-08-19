@@ -29,12 +29,12 @@ const PainTrendChart: React.FC<PainTrendChartProps> = ({ symptomEntries, t }) =>
 
     if (data.length < 2) {
         return (
-            <div className="bg-zinc-800 rounded-lg p-4">
+            <div className="bg-slate-800/80 rounded-lg p-4">
                 <h3 className="flex items-center text-md font-semibold text-teal-300 mb-2">
                     <TrendingUpIcon className="w-5 h-5 mr-2 flex-shrink-0" />
                     {t('painTrendChartTitle')}
                 </h3>
-                <div className="flex items-center justify-center h-[150px] text-center text-sm text-zinc-400">
+                <div className="flex items-center justify-center h-[150px] text-center text-sm text-slate-400">
                     <p>{t('painTrendChartNoData')}</p>
                 </div>
             </div>
@@ -51,7 +51,7 @@ const PainTrendChart: React.FC<PainTrendChartProps> = ({ symptomEntries, t }) =>
     const pathData = data.map(point => `${getX(point.date)},${getY(point.painLevel)}`).join(' L ');
 
     return (
-        <div className="bg-zinc-800 rounded-lg p-4">
+        <div className="bg-slate-800/80 rounded-lg p-4">
             <h3 className="flex items-center text-md font-semibold text-teal-300 mb-2">
                 <TrendingUpIcon className="w-5 h-5 mr-2 flex-shrink-0" />
                 {t('painTrendChartTitle')}
@@ -60,14 +60,14 @@ const PainTrendChart: React.FC<PainTrendChartProps> = ({ symptomEntries, t }) =>
                 <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto" aria-labelledby="chart-title">
                     <title id="chart-title">{t('painTrendChartTitle')}</title>
                     {/* Y-Axis labels */}
-                    <text x={padding.left - 8} y={getY(10) + 4} textAnchor="end" className="text-xs fill-zinc-400">10</text>
-                    <text x={padding.left - 8} y={getY(5) + 4} textAnchor="end" className="text-xs fill-zinc-400">5</text>
-                    <text x={padding.left - 8} y={getY(0) + 4} textAnchor="end" className="text-xs fill-zinc-400">0</text>
+                    <text x={padding.left - 8} y={getY(10) + 4} textAnchor="end" className="text-xs fill-slate-400">10</text>
+                    <text x={padding.left - 8} y={getY(5) + 4} textAnchor="end" className="text-xs fill-slate-400">5</text>
+                    <text x={padding.left - 8} y={getY(0) + 4} textAnchor="end" className="text-xs fill-slate-400">0</text>
                     
                     {/* Grid lines */}
-                    <line x1={padding.left} y1={getY(10)} x2={width - padding.right} y2={getY(10)} className="stroke-zinc-700" strokeWidth="0.5" />
-                    <line x1={padding.left} y1={getY(5)} x2={width - padding.right} y2={getY(5)} className="stroke-zinc-700" strokeWidth="0.5" strokeDasharray="2" />
-                    <line x1={padding.left} y1={getY(0)} x2={width - padding.right} y2={getY(0)} className="stroke-zinc-700" strokeWidth="0.5" />
+                    <line x1={padding.left} y1={getY(10)} x2={width - padding.right} y2={getY(10)} className="stroke-slate-700" strokeWidth="0.5" />
+                    <line x1={padding.left} y1={getY(5)} x2={width - padding.right} y2={getY(5)} className="stroke-slate-700" strokeWidth="0.5" strokeDasharray="2" />
+                    <line x1={padding.left} y1={getY(0)} x2={width - padding.right} y2={getY(0)} className="stroke-slate-700" strokeWidth="0.5" />
                     
                     {/* Data line */}
                     <path d={`M ${pathData}`} fill="none" className="stroke-teal-400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -98,11 +98,11 @@ const PainTrendChart: React.FC<PainTrendChartProps> = ({ symptomEntries, t }) =>
                     {/* Tooltip */}
                     {activePoint && (
                         <g transform={`translate(${getX(activePoint.date)}, ${getY(activePoint.painLevel)})`}>
-                            <rect x="-40" y="-40" width="80" height="30" rx="4" className="fill-zinc-900/80 stroke-zinc-600" />
-                            <text x="0" y="-25" textAnchor="middle" className="text-xs font-semibold fill-zinc-200">
+                            <rect x="-40" y="-40" width="80" height="30" rx="4" className="fill-slate-950/90 stroke-slate-600" />
+                            <text x="0" y="-25" textAnchor="middle" className="text-xs font-semibold fill-slate-200">
                                 {activePoint.painLevel}/10
                             </text>
-                            <text x="0" y="-13" textAnchor="middle" className="text-[10px] fill-zinc-400">
+                            <text x="0" y="-13" textAnchor="middle" className="text-[10px] fill-slate-400">
                                 {activePoint.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                             </text>
                         </g>

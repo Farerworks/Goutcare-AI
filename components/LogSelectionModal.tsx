@@ -24,9 +24,9 @@ const LogSelectionModal: React.FC<LogSelectionModalProps> = ({ isOpen, onClose, 
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-zinc-800 rounded-lg shadow-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
-        <h2 className="text-xl font-bold text-zinc-200 mb-1 text-center">{t('logEntryFor')}</h2>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-slate-900/80 border border-slate-700 rounded-lg shadow-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+        <h2 className="text-xl font-bold text-slate-200 mb-1 text-center">{t('logEntryFor')}</h2>
         <p className="text-center text-teal-400 mb-6">{formattedDate}</p>
         
         <div className="space-y-3">
@@ -34,16 +34,16 @@ const LogSelectionModal: React.FC<LogSelectionModalProps> = ({ isOpen, onClose, 
             <button
               key={type}
               onClick={() => onSelect(type)}
-              className={`w-full flex items-center gap-4 p-4 rounded-lg border border-zinc-700 bg-zinc-900/50 transition-colors ${hover}`}
+              className={`w-full flex items-center gap-4 p-4 rounded-lg border border-slate-700 bg-slate-900/50 transition-colors ${hover}`}
             >
               <Icon className={`w-8 h-8 flex-shrink-0 ${color}`} />
-              <span className="text-lg font-semibold text-zinc-200">{t(key)}</span>
+              <span className="text-lg font-semibold text-slate-200">{t(key)}</span>
             </button>
           ))}
         </div>
 
         <div className="mt-6 flex justify-end">
-          <button onClick={onClose} className="px-4 py-2 bg-zinc-600 rounded-md hover:bg-zinc-500 transition-colors">{t('cancel')}</button>
+          <button onClick={onClose} className="px-4 py-2 bg-slate-600 rounded-md hover:bg-slate-500 transition-colors">{t('cancel')}</button>
         </div>
       </div>
     </div>

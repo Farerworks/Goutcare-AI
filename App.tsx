@@ -1,8 +1,6 @@
-
-
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Content } from '@google/genai';
-import type { ChatMessage, GroundingChunk } from './types';
+import type { ChatMessage, GroundingChunk, SymptomEntry } from './types';
 import { generateChatResponseStream, summarizeHealthInfo } from './services/geminiService';
 import { parseMedicationMessages, parseDietMessages, parseSymptomMessages } from './utils/parsers';
 import ChatWindow from './components/ChatWindow';
@@ -15,10 +13,14 @@ import HealthSummaryModal from './components/HealthSummaryModal';
 import SettingsModal from './components/SettingsModal';
 import LogSelectionModal from './components/LogSelectionModal';
 import getTranslator, { type Language, type TranslationKey } from './translations';
+import { useDebounce } from './hooks/useDebounce';
+import { BotIcon, CalendarDaysIcon, CogIcon, FileHeartIcon, TrendingUpIcon } from './components/IconComponents';
 
 // Detect language once and get the translator function
 const lang: Language = navigator.language.split('-')[0] === 'ko' ? 'ko' : 'en';
 const t = getTranslator(lang);
+
+type ActiveTab = 'chat' | 'dashboard' | 'calendar';
 
 const getInitialMessages = (lang: Language, t: (key: TranslationKey, substitutions?: Record<string, string | number>) => string): ChatMessage[] => {
   try {
@@ -85,7 +87,7 @@ const getInitialMessages = (lang: Language, t: (key: TranslationKey, substitutio
     },
   ];
 
-  return [{ role: 'model', content: t('welcomeMessage') }, ...mockLogs];
+  return [{ role: 'model', content: t('welcomeMessageNew') }, ...mockLogs];
 };
 
 const Logo = () => (
@@ -117,13 +119,18 @@ const App: React.FC = () => {
   const [healthProfileSummary, setHealthProfileSummary] = useState<string>('');
   const [isLogSelectionModalOpen, setIsLogSelectionModalOpen] = useState(false);
   const [summaryCache, setSummaryCache] = useState<{ key: string, summary: string } | null>(null);
-  const healthSummaryUpdateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [activeTab, setActiveTab] = useState<ActiveTab>('chat');
   
   const showSuggestedPrompts = messages.length <= 1;
+  const debouncedMessages = useDebounce(messages, 120000); // Debounce for background summary updates
+
+  const allSymptomEntries = useMemo<SymptomEntry[]>(() => {
+    return parseSymptomMessages(messages);
+  }, [messages]);
 
   const Panel: React.FC<{children: React.ReactNode, className?: string}> = ({ children, className }) => (
-    <div className={`bg-zinc-900 border border-zinc-800 rounded-xl relative overflow-hidden min-h-0 ${className}`}>
-        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-teal-500/50 to-transparent"></div>
+    <div className={`bg-slate-900/50 border border-slate-800 rounded-xl relative overflow-hidden backdrop-blur-sm ${className}`}>
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-teal-400/30 to-transparent"></div>
         {children}
     </div>
   );
@@ -140,18 +147,32 @@ const App: React.FC = () => {
         setAppError("Could not save your conversation. Your browser's storage might be full or disabled.");
     }
   }, [messages]);
+  
+  // Memoize the conversion from ChatMessage[] to Gemini's Content[] format.
+  const geminiHistory = useMemo<Content[]>(() => {
+    return messages
+      .filter(msg => msg.content)
+      .map(msg => {
+        const parts: ({ text: string } | { inlineData: { mimeType: string, data: string } })[] = [{ text: msg.content }];
+        if (msg.image) {
+          parts.push({
+            inlineData: {
+              mimeType: msg.image.mimeType,
+              data: msg.image.data,
+            },
+          });
+        }
+        return { role: msg.role, parts };
+      });
+  }, [messages]);
 
   const updateHealthSummary = useCallback(async () => {
-    if (messages.length < 2) {
+    if (geminiHistory.length < 1) {
         setHealthProfileSummary('');
         return;
     }
     try {
-        const history: Content[] = messages.map(msg => ({
-            role: msg.role,
-            parts: [{ text: msg.content }]
-        }));
-        const summary = await summarizeHealthInfo(history, lang);
+        const summary = await summarizeHealthInfo(geminiHistory, lang);
         setHealthProfileSummary(summary);
     } catch (e: any) {
         console.error("Failed to update health summary in background", e);
@@ -160,56 +181,39 @@ const App: React.FC = () => {
             console.warn("Health summary update was rate-limited.");
         }
     }
-  }, [messages, lang]);
-
+  }, [geminiHistory, lang]);
+  
+  // Use the debounced messages to trigger the background health summary update.
   useEffect(() => {
-    if (healthSummaryUpdateTimeout.current) {
-        clearTimeout(healthSummaryUpdateTimeout.current);
-    }
-
     if (!isAiLoading) {
-        healthSummaryUpdateTimeout.current = setTimeout(() => {
-            updateHealthSummary();
-        }, 120000);
+      updateHealthSummary();
     }
+  }, [debouncedMessages, isAiLoading, updateHealthSummary]);
 
-    return () => {
-        if (healthSummaryUpdateTimeout.current) {
-            clearTimeout(healthSummaryUpdateTimeout.current);
-        }
-    };
-  }, [isAiLoading, messages, updateHealthSummary]);
 
   const handleSendMessage = useCallback(async (message: { text: string, image?: { mimeType: string, data: string } }) => {
     if (isAiLoading) return;
+    
+    // Switch to chat tab if a message is sent from another tab (e.g., via a log completion)
+    if (activeTab !== 'chat') {
+      setActiveTab('chat');
+    }
 
     setIsAiLoading(true);
     setAppError(null);
     const userMessage: ChatMessage = { role: 'user', content: message.text, image: message.image };
     
-    const currentMessages = [...messages, userMessage];
-    setMessages(currentMessages);
+    setMessages(prev => [...prev, userMessage]);
+    
+    // Construct history for this API call using the memoized history plus the new message.
+    const userMessagePart: Content['parts'] = [{ text: message.text }];
+    if (message.image) {
+        userMessagePart.push({ inlineData: { mimeType: message.image.mimeType, data: message.image.data } });
+    }
+    const historyForApi: Content[] = [...geminiHistory, { role: 'user', parts: userMessagePart }];
     
     try {
-      const history: Content[] = currentMessages
-        .filter(msg => msg.content)
-        .map(msg => {
-            const parts: ({ text: string } | { inlineData: { mimeType: string, data: string } })[] = [{ text: msg.content }];
-            if (msg.image) {
-                parts.push({
-                    inlineData: {
-                        mimeType: msg.image.mimeType,
-                        data: msg.image.data
-                    }
-                });
-            }
-            return {
-                role: msg.role,
-                parts: parts
-            };
-        });
-      
-      const stream = await generateChatResponseStream(history, lang);
+      const stream = await generateChatResponseStream(historyForApi, lang);
       
       let modelResponseText = '';
       const modelResponseSources: GroundingChunk[] = [];
@@ -248,7 +252,7 @@ const App: React.FC = () => {
     } finally {
       setIsAiLoading(false);
     }
-  }, [messages, isAiLoading, lang]);
+  }, [geminiHistory, isAiLoading, lang, activeTab]);
 
   const handleClear = () => {
     if (window.confirm(t('resetConfirmation'))) {
@@ -272,9 +276,8 @@ const App: React.FC = () => {
   };
 
   const recentPainLocations = useMemo(() => {
-    const allLogs = parseSymptomMessages(messages);
     const locationCounts: Record<string, number> = {};
-    allLogs.forEach(log => {
+    allSymptomEntries.forEach(log => {
         const location = log.painLocation.trim();
         if (location) {
             locationCounts[location] = (locationCounts[location] || 0) + 1;
@@ -284,7 +287,7 @@ const App: React.FC = () => {
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)
         .map(entry => entry[0]);
-  }, [messages]);
+  }, [allSymptomEntries]);
 
   const recentMedications = useMemo(() => {
     const allLogs = parseMedicationMessages(messages);
@@ -355,11 +358,7 @@ const App: React.FC = () => {
     setIsSummaryLoading(true);
     setHealthSummary(null);
     try {
-        const history: Content[] = messages.map(msg => ({
-            role: msg.role,
-            parts: [{ text: msg.content }]
-        }));
-        const summary = await summarizeHealthInfo(history, lang);
+        const summary = await summarizeHealthInfo(geminiHistory, lang);
         const finalSummary = summary || t('noSummaryFound');
         setHealthSummary(finalSummary);
         setSummaryCache({ key: cacheKey, summary: finalSummary });
@@ -368,7 +367,7 @@ const App: React.FC = () => {
     } finally {
         setIsSummaryLoading(false);
     }
-  }, [messages, lang, t, summaryCache]);
+  }, [geminiHistory, lang, t, summaryCache, messages]);
 
   const handleExportHistory = () => {
     const dataToExport = {
@@ -418,6 +417,27 @@ const App: React.FC = () => {
          alert(t('importError'));
     };
     reader.readAsText(file);
+  };
+  
+  const TabButton: React.FC<{
+      tabName: ActiveTab;
+      labelKey: TranslationKey;
+      Icon: React.FC<{className?: string}>
+  }> = ({ tabName, labelKey, Icon }) => {
+    const isActive = activeTab === tabName;
+    return (
+        <button
+            onClick={() => setActiveTab(tabName)}
+            className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-2.5 rounded-md text-sm font-semibold transition-all duration-200 border-b-2 ${
+                isActive 
+                ? 'bg-slate-700/50 text-teal-300 border-teal-400' 
+                : 'text-slate-400 border-transparent hover:bg-slate-800 hover:text-slate-200'
+            }`}
+        >
+            <Icon className="w-5 h-5" />
+            <span>{t(labelKey)}</span>
+        </button>
+    );
   };
 
   return (
@@ -483,38 +503,37 @@ const App: React.FC = () => {
         selectedDate={selectedLogDate}
         t={t}
        />
-      <div className="h-screen flex flex-col p-4 sm:p-6 lg:p-8 bg-zinc-950">
-        <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col min-h-0">
-          <header className="text-center mb-6 flex-shrink-0 flex items-center justify-center gap-3">
-            <Logo />
-            <div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">
-                  GoutCare AI
-                </h1>
-                <p className="mt-1 text-zinc-400 text-sm">{t('appSubtitle')}</p>
+      <div className="h-screen flex flex-col p-4 sm:p-6 lg:p-8">
+        <div className="w-full max-w-5xl mx-auto flex-1 flex flex-col min-h-0">
+          <header className="flex-shrink-0 flex items-center justify-between gap-3 pb-6 mb-4 border-b border-slate-800">
+            <div className="flex items-center gap-3">
+                <Logo />
+                <div>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">
+                      GoutCare AI
+                    </h1>
+                    <p className="mt-1 text-slate-400 text-xs sm:text-sm">{t('appSubtitle')}</p>
+                </div>
+            </div>
+             <div className="flex items-center gap-2">
+                <button onClick={handleShowSummary} className="flex items-center gap-2 px-3 py-1.5 text-sm text-sky-400 bg-transparent border border-sky-800 rounded-lg hover:bg-sky-900/40 hover:text-sky-300 transition-colors" title={t('myHealthSummaryAria')}>
+                    <FileHeartIcon className="w-4 h-4" />
+                    <span className="hidden sm:inline">{t('myHealthSummary')}</span>
+                </button>
+                <button onClick={() => setIsSettingsModalOpen(true)} className="flex items-center justify-center w-8 h-8 text-slate-400 bg-slate-800/80 rounded-full hover:bg-slate-700 hover:text-slate-200 transition-colors" title={t('settingsAria')}>
+                    <CogIcon className="w-5 h-5" />
+                </button>
             </div>
           </header>
 
-          <main className="flex-1 grid grid-cols-1 lg:grid-cols-7 gap-6 lg:gap-8 min-h-0 lg:grid-rows-1 grid-rows-[auto_auto_1fr]">
-            <Panel className="lg:col-span-2">
-              <DashboardPanel
-                messages={messages}
-                t={t}
-                lang={lang}
-                healthProfileSummary={healthProfileSummary}
-              />
-            </Panel>
-            
-            <Panel className="lg:col-span-2">
-                <CalendarPanel 
-                    messages={messages}
-                    onLogRequest={handleDateSelection}
-                    t={t}
-                />
-            </Panel>
-
-            <Panel className="lg:col-span-3">
-              {appError && (
+          <div className="flex-shrink-0 mb-4 bg-slate-800/60 p-1 rounded-lg flex items-center gap-1">
+              <TabButton tabName='chat' labelKey='tabChat' Icon={BotIcon}/>
+              <TabButton tabName='dashboard' labelKey='tabDashboard' Icon={TrendingUpIcon}/>
+              <TabButton tabName='calendar' labelKey='tabCalendar' Icon={CalendarDaysIcon}/>
+          </div>
+          
+          <main className="flex-1 min-h-0">
+             {appError && (
                 <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg relative m-4 flex-shrink-0" role="alert">
                   <strong className="font-bold">{t('errorPrefix')}</strong>
                   <span className="block sm:inline">{appError}</span>
@@ -523,19 +542,36 @@ const App: React.FC = () => {
                   </button>
                 </div>
               )}
-
-              <ChatWindow
-                messages={messages}
-                onSendMessage={handleSendMessage}
-                isLoading={isAiLoading}
-                onOpenSettings={() => setIsSettingsModalOpen(true)}
-                onOpenLogModal={(type) => openLogModal(type, null)}
-                onShowSummary={handleShowSummary}
-                t={t}
-                showSuggestedPrompts={showSuggestedPrompts}
-              />
+            <Panel className="h-full flex flex-col">
+              <div className={activeTab === 'chat' ? 'h-full' : 'hidden'}>
+                <ChatWindow
+                    messages={messages}
+                    onSendMessage={handleSendMessage}
+                    isLoading={isAiLoading}
+                    onOpenLogModal={(type) => openLogModal(type, null)}
+                    t={t}
+                    showSuggestedPrompts={showSuggestedPrompts}
+                />
+              </div>
+              <div className={activeTab === 'dashboard' ? 'h-full' : 'hidden'}>
+                 <DashboardPanel
+                    messages={messages}
+                    t={t}
+                    lang={lang}
+                    healthProfileSummary={healthProfileSummary}
+                    symptomEntries={allSymptomEntries}
+                />
+              </div>
+               <div className={activeTab === 'calendar' ? 'h-full' : 'hidden'}>
+                <CalendarPanel 
+                    messages={messages}
+                    onLogRequest={handleDateSelection}
+                    t={t}
+                />
+              </div>
             </Panel>
           </main>
+
         </div>
       </div>
     </>
