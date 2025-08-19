@@ -18,6 +18,10 @@ import ChatCalendarPanel from './components/ChatCalendarPanel';
 import HealthSummaryModal from './components/HealthSummaryModal';
 import SettingsModal from './components/SettingsModal';
 import LogSelectionModal from './components/LogSelectionModal';
+import MainNavigation, { type NavigationSection } from './components/MainNavigation';
+import SimpleDashboard from './components/SimpleDashboard';
+import SmartHomeDashboard from './components/SmartHomeDashboard';
+import AdvancedSettings from './components/AdvancedSettings';
 import WaterIntakeTracker from './components/WaterIntakeTracker';
 import UricAcidTracker from './components/UricAcidTracker';
 import MedicalRecordManager from './components/MedicalRecordManager';
@@ -54,10 +58,8 @@ const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>(() => getInitialMessages(lang, t));
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
   const [appError, setAppError] = useState<string | null>(null);
-  const [layoutMode, setLayoutMode] = useState<'2-panel' | '3-panel'>(() => {
-    // Always default to 2-panel, ignore any stored preference
-    return '2-panel';
-  });
+  // 새로운 단순한 네비게이션 상태
+  const [activeSection, setActiveSection] = useState<NavigationSection>('home');
   const [isSymptomModalOpen, setIsSymptomModalOpen] = useState(false);
   const [isMedicationModalOpen, setIsMedicationModalOpen] = useState(false);
   const [isDietModalOpen, setIsDietModalOpen] = useState(false);
@@ -305,6 +307,15 @@ const App: React.FC = () => {
       }
   };
 
+  const handleQuickAction = (action: 'symptom' | 'medication' | 'diet' | 'water' | 'ai-chat') => {
+    if (action === 'ai-chat') {
+      setActiveSection('chat');
+    } else {
+      setSelectedLogDate(new Date());
+      openLogModal(action, new Date());
+    }
+  };
+
   const handleShowSummary = useCallback(async () => {
     setIsSummaryModalOpen(true);
     const cacheKey = `${messages.length}-${messages[messages.length - 1]?.content}`;
@@ -494,98 +505,30 @@ const App: React.FC = () => {
         selectedDate={selectedLogDate}
         t={t}
        />
-      <div className="h-screen flex flex-col p-4 sm:p-6 lg:p-8 bg-zinc-950">
-        <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col min-h-0">
-          <header className="mb-6 flex-shrink-0">
-            {/* Enhanced Header with Smart Status */}
-            <div className="bg-gradient-to-r from-zinc-900/50 via-zinc-800/30 to-zinc-900/50 rounded-2xl p-6 border border-zinc-700/50 shadow-2xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <Logo />
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-zinc-900 animate-pulse"></div>
-                  </div>
-                  <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-emerald-400 to-cyan-400">
-                      GoutCare AI
-                    </h1>
-                    <p className="mt-1 text-zinc-400 text-sm">{t('appSubtitle')}</p>
-                  </div>
-                </div>
-                
-                {/* Layout Toggle + Smart Status */}
-                <div className="hidden sm:flex items-center gap-3">
-                  <button
-                    onClick={() => setLayoutMode(layoutMode === '2-panel' ? '3-panel' : '2-panel')}
-                    className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 border ${
-                      layoutMode === '2-panel'
-                        ? 'bg-teal-600 text-white border-teal-500'
-                        : 'bg-zinc-700 text-zinc-300 border-zinc-600 hover:bg-zinc-600'
-                    }`}
-                  >
-                    {layoutMode === '2-panel' ? '📱 간편형' : '🖥️ 고급형'}
-                  </button>
-                  <div className="w-px h-8 bg-zinc-600"></div>
-                  <div className="text-right">
-                    <div className="text-xs text-zinc-500">시스템 상태</div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                      <span className="text-xs text-green-400 font-medium">정상</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      <div className="h-screen flex flex-col bg-zinc-950">
+        {/* New Main Navigation */}
+        <MainNavigation
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          t={t}
+        />
+
+        {/* Main Content Area */}
+        <main className="flex-1 min-h-0 overflow-hidden">
+          {activeSection === 'home' && (
+            <div className="h-full overflow-y-auto">
+              <SmartHomeDashboard
+                messages={messages}
+                t={t}
+                lang={lang}
+                onQuickAction={handleQuickAction}
+              />
             </div>
-          </header>
+          )}
 
-{layoutMode === '2-panel' ? (
-            /* 2-Panel Layout: Dashboard + Chat/Calendar */
-            <main className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 min-h-0">
-              <Panel className="lg:col-span-2">
-                <UnifiedDashboard
-                  messages={messages}
-                  t={t}
-                  lang={lang}
-                  healthProfileSummary={healthProfileSummary}
-                />
-              </Panel>
-              
-              <Panel className="lg:col-span-1">
-                <ChatCalendarPanel
-                  messages={messages}
-                  onSendMessage={handleSendMessage}
-                  isLoading={isAiLoading}
-                  onOpenSettings={() => setIsSettingsModalOpen(true)}
-                  onOpenLogModal={(type) => openLogModal(type, null)}
-                  onShowSummary={handleShowSummary}
-                  onLogRequest={handleDateSelection}
-                  t={t}
-                  showSuggestedPrompts={showSuggestedPrompts}
-                  appError={appError}
-                />
-              </Panel>
-            </main>
-          ) : (
-            /* 3-Panel Layout: Original Advanced Layout */
-            <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 min-h-0 lg:grid-rows-1 grid-rows-[auto_auto_1fr]">
-              <Panel className="lg:col-span-4">
-                <div className="flex items-center border-b border-zinc-700 p-2 space-x-1">
-                  <button className="px-3 py-2 text-xs font-medium rounded-lg bg-teal-600 text-white">
-                    📊 고급 대시보드
-                  </button>
-                </div>
-                <OptimizedDashboard messages={messages} t={t} />
-              </Panel>
-              
-              <Panel className="lg:col-span-3">
-                <CalendarPanel 
-                  messages={messages}
-                  onLogRequest={handleDateSelection}
-                  t={t}
-                />
-              </Panel>
-
-              <Panel className="lg:col-span-5">
+          {activeSection === 'chat' && (
+            <div className="h-full flex">
+              <div className="flex-1">
                 {appError && (
                   <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg relative m-4 flex-shrink-0" role="alert">
                     <strong className="font-bold">{t('errorPrefix')}</strong>
@@ -606,10 +549,34 @@ const App: React.FC = () => {
                   t={t}
                   showSuggestedPrompts={showSuggestedPrompts}
                 />
-              </Panel>
-            </main>
+              </div>
+            </div>
           )}
-        </div>
+
+          {activeSection === 'records' && (
+            <div className="h-full overflow-y-auto">
+              <CalendarPanel 
+                messages={messages}
+                onLogRequest={handleDateSelection}
+                t={t}
+              />
+            </div>
+          )}
+
+          {activeSection === 'settings' && (
+            <div className="h-full overflow-y-auto">
+              <AdvancedSettings
+                messages={messages}
+                t={t}
+                lang={lang}
+                healthProfileSummary={healthProfileSummary}
+                onExport={handleExportHistory}
+                onImport={handleImportHistory}
+                onReset={handleClear}
+              />
+            </div>
+          )}
+        </main>
       </div>
       
       {/* 사용량 모니터 */}
