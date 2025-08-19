@@ -34,6 +34,37 @@ export type DietEntry = {
     timeOfDay: 'Breakfast' | 'Lunch' | 'Dinner' | 'After Dinner';
     foodDescription: string;
     summary: string;
+    estimatedPurine?: number; // mg per serving
+    servingSize?: string;
+};
+
+// New types for enhanced tracking
+export type UricAcidEntry = {
+    date: Date;
+    level: number; // mg/dL
+    labName?: string;
+    notes?: string;
+};
+
+export type WaterIntakeEntry = {
+    date: Date;
+    amount: number; // ml
+    time: string;
+    type: 'water' | 'tea' | 'coffee' | 'juice' | 'other';
+};
+
+export type MedicalRecordEntry = {
+    date: Date;
+    type: 'blood_test' | 'urine_test' | 'xray' | 'prescription' | 'consultation' | 'other';
+    doctorName?: string;
+    hospitalName?: string;
+    diagnosis?: string;
+    notes?: string;
+    attachments?: Array<{
+        mimeType: string;
+        data: string;
+        fileName?: string;
+    }>;
 };
 
 

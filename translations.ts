@@ -64,6 +64,11 @@ const translations = {
 
     // DietLogModal.tsx
     dietLogTitle: "Diet Log",
+    
+    // New Health Tracking Components
+    waterIntakeTitle: "Water Intake",
+    uricAcidTitle: "Uric Acid Level",
+    medicalRecordTitle: "Medical Record",
     dietLogStep1Title: "What did you eat?",
     dietLogStep2Title: "When did you eat?",
     foodDescriptionLabel: "Food/Meal Description",
@@ -204,6 +209,11 @@ const translations = {
 
     // DietLogModal.tsx
     dietLogTitle: "식단 기록",
+    
+    // New Health Tracking Components
+    waterIntakeTitle: "수분 섭취",
+    uricAcidTitle: "요산 수치",
+    medicalRecordTitle: "의료 기록",
     dietLogStep1Title: "무엇을 드셨나요?",
     dietLogStep2Title: "언제 드셨나요?",
     foodDescriptionLabel: "음식/식사 설명",

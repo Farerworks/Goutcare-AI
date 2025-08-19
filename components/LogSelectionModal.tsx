@@ -5,7 +5,7 @@ import { FileHeartIcon, PillIcon, UtensilsIcon } from './IconComponents';
 interface LogSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (logType: 'symptom' | 'medication' | 'diet') => void;
+  onSelect: (logType: 'symptom' | 'medication' | 'diet' | 'water' | 'uricacid' | 'medical') => void;
   selectedDate: Date | null;
   t: (key: TranslationKey, substitutions?: Record<string, string | number>) => string;
 }
@@ -18,9 +18,12 @@ const LogSelectionModal: React.FC<LogSelectionModalProps> = ({ isOpen, onClose, 
   }).format(selectedDate);
 
   const options = [
-    { type: 'symptom' as const, key: 'symptomCheckinTitle' as const, Icon: FileHeartIcon, color: 'text-red-400', hover: 'hover:bg-red-900/50' },
-    { type: 'medication' as const, key: 'medicationLogTitle' as const, Icon: PillIcon, color: 'text-sky-400', hover: 'hover:bg-sky-900/50' },
-    { type: 'diet' as const, key: 'dietLogTitle' as const, Icon: UtensilsIcon, color: 'text-amber-400', hover: 'hover:bg-amber-900/50' }
+    { type: 'symptom' as const, key: 'symptomCheckinTitle' as const, icon: '🤕', color: 'text-red-400', hover: 'hover:bg-red-900/50' },
+    { type: 'medication' as const, key: 'medicationLogTitle' as const, icon: '💊', color: 'text-sky-400', hover: 'hover:bg-sky-900/50' },
+    { type: 'diet' as const, key: 'dietLogTitle' as const, icon: '🍽️', color: 'text-amber-400', hover: 'hover:bg-amber-900/50' },
+    { type: 'water' as const, key: 'waterIntakeTitle' as const, icon: '💧', color: 'text-cyan-400', hover: 'hover:bg-cyan-900/50' },
+    { type: 'uricacid' as const, key: 'uricAcidTitle' as const, icon: '🔬', color: 'text-purple-400', hover: 'hover:bg-purple-900/50' },
+    { type: 'medical' as const, key: 'medicalRecordTitle' as const, icon: '🏥', color: 'text-emerald-400', hover: 'hover:bg-emerald-900/50' }
   ];
 
   return (
@@ -29,15 +32,15 @@ const LogSelectionModal: React.FC<LogSelectionModalProps> = ({ isOpen, onClose, 
         <h2 className="text-xl font-bold text-zinc-200 mb-1 text-center">{t('logEntryFor')}</h2>
         <p className="text-center text-teal-400 mb-6">{formattedDate}</p>
         
-        <div className="space-y-3">
-          {options.map(({ type, key, Icon, color, hover }) => (
+        <div className="grid grid-cols-2 gap-3">
+          {options.map(({ type, key, icon, color, hover }) => (
             <button
               key={type}
               onClick={() => onSelect(type)}
-              className={`w-full flex items-center gap-4 p-4 rounded-lg border border-zinc-700 bg-zinc-900/50 transition-colors ${hover}`}
+              className={`flex flex-col items-center gap-2 p-4 rounded-lg border border-zinc-700 bg-zinc-900/50 transition-all ${hover}`}
             >
-              <Icon className={`w-8 h-8 flex-shrink-0 ${color}`} />
-              <span className="text-lg font-semibold text-zinc-200">{t(key)}</span>
+              <span className={`text-3xl ${color}`}>{icon}</span>
+              <span className="text-sm font-semibold text-zinc-200">{t(key)}</span>
             </button>
           ))}
         </div>

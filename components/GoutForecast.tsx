@@ -92,7 +92,7 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang, healthProfileSumma
         // Improved cache key using a safe base64 hash of the health profile
         const profileHash = debouncedHealthProfileSummary ? utf8ToBase64(debouncedHealthProfileSummary).substring(0, 10) : 'none';
         const locationKeyPart = location ? `${location.latitude.toFixed(2)}_${location.longitude.toFixed(2)}` : 'generic';
-        const cacheKey = `goutForecast_v7_${lang}_${locationKeyPart}_${profileHash}`;
+        const cacheKey = `goutForecast_v8_${lang}_${locationKeyPart}_${profileHash}`;
         
         const cachedData = localStorage.getItem(cacheKey);
         const now = new Date().getTime();
@@ -108,8 +108,25 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang, healthProfileSumma
           }
         }
 
-        const responseJson = await generateGoutForecast(lang, location, debouncedHealthProfileSummary);
-        const data = JSON.parse(responseJson) as GoutForecast;
+        // Convert coordinates to location name using reverse geocoding
+        let locationString = '';
+        let displayLocationName = '';
+        
+        if (location) {
+          try {
+            const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${location.latitude}&longitude=${location.longitude}&localityLanguage=${lang}`);
+            const geoData = await response.json();
+            displayLocationName = geoData.city || geoData.locality || geoData.principalSubdivision || `${location.latitude.toFixed(2)}, ${location.longitude.toFixed(2)}`;
+            locationString = displayLocationName;
+          } catch (geoError) {
+            console.warn('Reverse geocoding failed, using coordinates', geoError);
+            locationString = `${location.latitude.toFixed(2)}, ${location.longitude.toFixed(2)}`;
+            displayLocationName = locationString;
+          }
+        }
+        
+        const responseJson = await generateGoutForecast(locationString, debouncedHealthProfileSummary, lang);
+        const data = typeof responseJson === 'string' ? JSON.parse(responseJson) : responseJson;
         
         if (data.forecast && data.forecast.length > 7) {
             data.forecast = data.forecast.slice(0, 7);
@@ -121,6 +138,8 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang, healthProfileSumma
 
       } catch (e: any) {
         console.error("Failed to fetch or parse gout forecast", e);
+        console.error("Error type:", typeof e);
+        console.error("Error details:", e);
         
         let errorMessage = '';
         if (typeof e === 'string') {
@@ -133,10 +152,14 @@ const GoutForecast: React.FC<GoutForecastProps> = ({ t, lang, healthProfileSumma
             errorMessage = String(e);
         }
 
+        console.error("Processed error message:", errorMessage);
+
         if (errorMessage.includes('429') || errorMessage.toLowerCase().includes('resource_exhausted') || errorMessage.toLowerCase().includes('quota')) {
             setError(t('forecastErrorRateLimit'));
+        } else if (errorMessage.toLowerCase().includes('api') && errorMessage.toLowerCase().includes('key')) {
+            setError('API 키 오류: 환경 변수를 확인해주세요');
         } else {
-            setError(t('forecastErrorGeneral'));
+            setError(`${t('forecastErrorGeneral')}: ${errorMessage}`);
         }
       } finally {
         setIsLoading(false);

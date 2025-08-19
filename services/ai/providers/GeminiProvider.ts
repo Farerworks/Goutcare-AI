@@ -1,16 +1,16 @@
 // Gemini Provider Implementation (기존 코드 래핑)
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { AIProvider, AIResponse, ChatHistory, AIOptions } from '../AIProvider';
 
 export class GeminiProvider implements AIProvider {
   name = 'gemini';
-  private genAI: GoogleGenAI;
+  private genAI: GoogleGenerativeAI;
   private model: any;
   
   constructor(apiKey: string) {
-    this.genAI = new GoogleGenAI(apiKey);
+    this.genAI = new GoogleGenerativeAI(apiKey);
     this.model = this.genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-1.5-flash-latest",
       generationConfig: {
         temperature: 0.7,
         topK: 40,
@@ -64,7 +64,7 @@ export class GeminiProvider implements AIProvider {
   async searchWeb(query: string): Promise<any[]> {
     // Gemini의 googleSearch 도구 사용
     const searchModel = this.genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-1.5-flash-latest",
       tools: [{
         googleSearch: {}
       }]

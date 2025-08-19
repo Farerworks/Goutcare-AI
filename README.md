@@ -19,9 +19,14 @@ GoutCare AI is a privacy-first, browser-based application designed to help indiv
   - **Live Web Search:** Uses the Gemini `googleSearch` tool to find up-to-date information, complete with source citations.
   - **Multilingual:** Fully supports both English and Korean.
 
-- **Comprehensive Health Dashboard:**
-  - **Personalized Gout Forecast & Today's Tip:** The left-hand dashboard panel provides a weekly gout forecast, personalized using your health summary, alongside a daily tip for gout management.
-  - **Unified Log Calendar & Pain Trend:** The central panel features an interactive calendar to log and visualize all health events. Below the calendar, a trend chart displays your pain levels over the last 30 days.
+- **Dual Layout System (Updated 2025-01-19):**
+  - **2-Panel Mode (Default):** Optimized layout for efficiency
+    - **Unified Health Dashboard:** Consolidated view with 3 modes (Summary/Tracking/Analysis)
+    - **Integrated Chat & Calendar Panel:** Combined interface with flexible layout options (vertical/tabs)
+  - **3-Panel Mode (Advanced):** Traditional detailed layout for power users
+    - **Optimized Dashboard:** Advanced analytics and visualizations
+    - **Dedicated Calendar Panel:** Full-featured calendar with pain trend chart
+    - **Separate Chat Window:** Focused AI conversation interface
 
 - **Seamless Health Logging:**
   - **Symptom Logging:** Log pain location, pain level (0-10), associated symptoms (swelling, redness), and notes.
@@ -77,6 +82,39 @@ This project is a static web application and can be run using any simple local s
     ```
     The application will then be available at `http://localhost:3000` (or another port specified by the server).
 
+## 🎨 UX/UI Improvements (January 2025)
+
+### Major Interface Overhaul
+
+GoutCare AI now features a completely redesigned interface focused on user experience and efficiency:
+
+#### Dual Layout System
+- **Smart Layout Switching:** Toggle between simplified 2-panel and advanced 3-panel layouts based on your needs
+- **Default 2-Panel Mode:** Optimized for most users with consolidated information and minimal duplication
+- **Advanced 3-Panel Mode:** For power users who want detailed, separated views
+
+#### New Components
+- **UnifiedDashboard:** Eliminates duplicate information with 3 distinct modes:
+  - 🏥 **Health Summary:** Key metrics at a glance with risk assessment
+  - 📝 **Daily Tracking:** Today's progress and logging status  
+  - 📊 **Deep Analysis:** Trends, predictions, and advanced insights
+
+- **ChatCalendarPanel:** Revolutionary combined interface:
+  - **Flexible Layouts:** Switch between vertical (calendar-top) and tabbed interfaces
+  - **Space Optimization:** Calendar sized at 220px with expandable chat area (400px+)
+  - **Seamless Integration:** Calendar interactions don't interfere with chat scrolling
+
+- **CompactCalendar:** Purpose-built for efficiency:
+  - **Micro-sized Cells:** 5x5 grid cells maximize information density
+  - **Activity Indicators:** Tiny colored dots show logged data (symptoms/meds/diet)
+  - **Safe Interactions:** Proper event handling prevents UI conflicts
+
+#### Enhanced User Experience
+- **Visual Hierarchy:** Health risks clearly prioritized with color-coded indicators
+- **Intuitive Navigation:** Emoji-based icons with descriptive tooltips
+- **Responsive Design:** Consistent experience across all screen sizes
+- **Interaction Safety:** All buttons include proper event handling to prevent display glitches
+
 ## 📁 Project Structure
 
 ```
@@ -90,22 +128,28 @@ This project is a static web application and can be run using any simple local s
 ├── translations.ts               # i18n translations for EN/KO
 ├── types.ts                      # TypeScript type definitions
 ├── components/                   # Reusable React components
-│   ├── CalendarPanel.tsx
-│   ├── ChatWindow.tsx
-│   ├── DashboardPanel.tsx
+│   ├── CalendarPanel.tsx         # Dedicated calendar with trends
+│   ├── ChatCalendarPanel.tsx     # NEW: Integrated chat+calendar panel
+│   ├── ChatWindow.tsx            # AI conversation interface
+│   ├── CompactCalendar.tsx       # NEW: Space-optimized calendar
+│   ├── ComprehensiveDashboard.tsx
+│   ├── DashboardPanel.tsx        # Legacy dashboard component
 │   ├── DietLogModal.tsx
 │   ├── GoutForecast.tsx
 │   ├── HealthSummaryModal.tsx
 │   ├── IconComponents.tsx
 │   ├── LogSelectionModal.tsx
 │   ├── MedicationLogModal.tsx
+│   ├── OptimizedDashboard.tsx    # Advanced 3-panel dashboard
 │   ├── PainTrendChart.tsx
 │   ├── SettingsModal.tsx
-│   └── SymptomCheckinModal.tsx
+│   ├── SymptomCheckinModal.tsx
+│   ├── UnifiedDashboard.tsx      # NEW: Consolidated 2-panel dashboard
+│   └── [Additional health trackers...]
 ├── hooks/                        # Custom React hooks
 │   └── useDebounce.ts
 ├── services/                     # Services for external APIs
-│   └── geminiService.ts
+│   └── geminiOptimized.ts        # Updated AI service with cost optimization
 └── utils/                        # Utility functions
     ├── imageUtils.ts
     └── parsers.ts

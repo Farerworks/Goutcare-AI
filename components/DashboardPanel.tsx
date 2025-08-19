@@ -2,6 +2,10 @@ import React, { useEffect, useState } from 'react';
 import type { ChatMessage } from '../types';
 import type { Language, TranslationKey } from '../translations';
 import GoutForecast from './GoutForecast';
+import DailyPurineTracker from './DailyPurineTracker';
+import HealthScoreSystem from './HealthScoreSystem';
+import UricAcidTrendChart from './UricAcidTrendChart';
+import GoutFlareRiskPrediction from './GoutFlareRiskPrediction';
 import { LightbulbIcon } from './IconComponents';
 
 // --- SUB-COMPONENT: TIP OF THE DAY ---
@@ -36,6 +40,22 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({ messages, t, lang, heal
     <div className="p-3 lg:p-6 h-full flex flex-col gap-6 overflow-y-auto">
       <div className="flex-shrink-0">
         <GoutForecast t={t} lang={lang} healthProfileSummary={healthProfileSummary} />
+      </div>
+      
+      <div className="flex-shrink-0">
+        <DailyPurineTracker messages={messages} t={t} />
+      </div>
+      
+      <div className="flex-shrink-0">
+        <HealthScoreSystem messages={messages} t={t} />
+      </div>
+      
+      <div className="flex-shrink-0">
+        <UricAcidTrendChart t={t} />
+      </div>
+      
+      <div className="flex-shrink-0">
+        <GoutFlareRiskPrediction messages={messages} t={t} />
       </div>
 
       <div className="flex-shrink-0">

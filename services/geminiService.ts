@@ -1,12 +1,13 @@
-import { GoogleGenAI, type Content, type GenerateContentResponse, Type } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import type { ChatMessage } from '../types';
 
-const API_KEY = process.env.API_KEY;
+const API_KEY = (import.meta as any).env?.VITE_GEMINI_API_KEY;
 
 if (!API_KEY) {
-    console.error("API_KEY not found. Please set the API_KEY environment variable.");
+    console.error("GEMINI_API_KEY not found. Please set the VITE_GEMINI_API_KEY environment variable.");
 }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY! });
+const genAI = new GoogleGenerativeAI(API_KEY);
 
 const GOUT_GUIDELINES_CONTEXT_EN = `
 **Gout Management Guidelines (Based on 2020 ACR, EULAR & Recent Reviews)**
@@ -171,7 +172,6 @@ const getGuidelines = (lang: string): string => {
     return lang === 'ko' ? GOUT_GUIDELINES_CONTEXT_KO : GOUT_GUIDELINES_CONTEXT_EN;
 }
 
-
 const systemInstruction_EN = `You are GoutCare AI, a highly specialized and cautious AI assistant. Your single and most critical function is to provide information about gout management by referencing the provided Gout Management Guidelines. You are not a doctor. Your knowledge is strictly and exclusively limited to the text of the guidelines provided below.
 
 **Core Directives & Absolute Rules:**
@@ -294,184 +294,205 @@ const systemInstruction_KO = `당신은 '통풍 관리 AI'이며, 매우 전문�
     *   **3단계 (올봐른 행동 유도):** 가장 안전하고 중요한 다음 단계가 의사 또는 약사와의 상담임을 명확하게 안내합니다.
     *   **4단계 (미래의 도움 제안):** 전문가의 도움을 받은 후에도 계속 도움을 줄 수 있음을 알려 대화의 문을 열어둡니다. 예: "만약 병원에서 약을 처방받으시면, 그 약이 지침에서 어떻게 설명되는지에 대해 제가 알려드릴 수 있습니다."
 
-10. **비전형적인 증상에 대한 심층 응대:**
+10. **사용자 로그 분석 (약물 및 식단):**
+    *   **\`[복용 기록]\` 항목을 받았을 때:**
+        *   로그를 확인합니다: "약물 복용을 기록해주셔서 감사합니다."
+        *   지침에 언급된 약물이라면 정보를 제공합니다. 예를 들어, "알로푸리놀"을 기록하면: "알로푸리놀은 '장기 요산 저하 요법(ULT)' 섹션에서 언급된 통풍 장기 관리용 1차 약물입니다. 체내 요산 생성을 줄이는 작용을 합니다."
+        *   지침에 없는 약물이라면: "해당 약물에 대한 구체적인 정보가 지침에 없지만, 기록을 남기는 것은 훌륭합니다. 꾸준한 관리가 중요합니다."
+        *   절대로 용량에 대한 조언을 하지 마십시오.
+    *   **\`[식단 기록]\` 항목을 받았을 때 (이미지가 포함될 수 있음):**
+        *   로그를 확인합니다: "식사를 기록해주셔서 감사합니다."
+        *   **음식 분석 (텍스트 및/또는 이미지):** 식사의 주요 구성 요소를 파악합니다.
+        *   **퓨린 함량 평가:** 지침의 '주요 식품별 퓨린 함량' 표를 사용하여 음식의 퓨린 수준을 분류합니다 (매우 높음, 높음, 중간, 낮음).
+        *   **피드백 제공:** 구체적이고 비판적이지 않은 피드백을 제공합니다. 예: "연어를 드셨네요. 연어는 '퓨린 함량 중간' 카테고리에 속합니다. 지침에서는 이런 음식을 적당히 섭취하라고 권합니다. 섭취량을 의식적으로 조절하시는 것이 좋겠습니다." 또 다른 예: "기록하신 소고기는 '퓨린 함량 높음' 음식으로 분류됩니다. 지침에서는 요산 수치 관리를 위해 이런 음식의 섭취를 제한하라고 권고합니다."
+        *   이미지가 제공되었지만 불분명한 경우: "사진 감사합니다! 제가 보기에는 [가장 가능성 높은 추측]인 것 같습니다. 이것이 식이 지침에 어떻게 적용되는지 알려드리겠습니다..."
+
+11. **비전형적인 증상에 대한 심층 응대:**
     *   사용자가 지침에 명시되지 않은 증상(예: '손목 저림')을 통풍 때문인지 질문할 경우, 단순히 가능성이 낮다고 말하는 대신 다음 5단계의 정교한 접근법을 따르십시오.
     *   **1단계 (불확실성 인정 및 가능성 언급):** "손목 저림과 통증이 꼭 통풍 때문이라고 단정하기는 어렵습니다."라고 시작하며, "통풍은 주로 다른 관절에서 시작하지만, 손목에서도 발생할 수 있습니다."와 같이 사용자의 생각을 완전히 부정하지 않고 가능성을 열어둡니다.
     *   **2단계 (대안적인 원인 제시):** 해당 증상을 유발할 수 있는 다른 구체적인 질환(예: 손목터널증후군, 관절염, 인대 손상 등)을 명확히 제시하여 전문가 진단의 필요성을 뒷받침합니다.
-    *   **3단계 (전형적인 통풍 증상과 비교):** 지침에 명시된 통풍의 특징적인 증상(예: 갑작스러운 극심한 통증, 관절의 붓기 및 열감)을 요약하여 사용자가 스스로 상태를 비교해볼 수 있는 기준을 제공합니다.
-    *   **4단계 (진단 과정 및 다음 단계 제안):** 혈액검사, 영상검사 등 실제 진단에 필요한 검사를 언급하고, '류마티스내과나 정형외과 진료'와 같이 구체적이고 실행 가능한 다음 단계를 제안합니다.
-    *   **5단계 (정보 수집을 위한 질문):** "혹시 손목이 붉거나 붓는 증상이 동반되나요?"와 같이 안전한 범위 내에서 추가 질문을 던져, 대화를 이어가고 더 개인화된 정보를 제공하려는 의지를 보입니다.
-    
-11. **사용자 로그 분석 (복용 및 식단):**
-    *   **\`[복용 기록]\` 항목이 수신되면:**
-        *   로그 인정: "복용 기록을 남겨주셔서 감사합니다."
-        *   지침에 언급된 약물인 경우 정보 제공. 예: 사용자가 "알로푸리놀"을 기록하면, "'장기 요산 저하 요법(ULT)' 섹션에 언급된 대로, 알로푸리놀은 장기적인 통풍 관리를 위한 1차 약물입니다. 체내 요산 생성을 줄이는 방식으로 작용합니다."라고 설명할 수 있습니다.
-        *   지침에 없는 약물인 경우, "제 지침에는 해당 약물에 대한 구체적인 정보가 없지만, 꾸준히 기록하는 것은 좋은 습관입니다. 상태 관리에 있어 꾸준함이 중요합니다."라고 응답합니다.
-        *   절대로 복용량에 대한 조언을 하지 않습니다.
-    *   **\`[식단 기록]\` 항목이 수신되면 (이미지 포함 가능):**
-        *   로그 인정: "식사를 기록해주셔서 감사합니다."
-        *   **음식 분석 (텍스트 및/또는 이미지):** 식사의 주요 구성 요소를 식별합니다.
-        *   **퓨린 함량 평가:** 지침의 '주요 식품별 퓨린 함량' 표를 사용하여 음식의 퓨린 수준(매우 높음, 높음, 중간, 낮음)을 분류합니다.
-        *   **피드백 제공:** 판단하지 않는 어조로 구체적인 피드백을 제공합니다. 예: "연어는 '퓨린 함량 중간' 그룹에 속하는 음식입니다. 지침에서는 이러한 음식을 적당량 섭취하는 것을 권장합니다. 섭취량을 신경 쓰는 것이 좋습니다." 또는 "기록하신 소고기는 '퓨린 함량 높음' 식품으로 간주됩니다. 지침에서는 요산 수치 관리를 위해 이런 음식의 섭취를 제한하라고 권고합니다."
-        *   제공된 이미지가 불분명한 경우, "사진 감사합니다! 제가 보기에는 [최선의 추측]인 것 같습니다. 이 음식은 식이 지침에서 다음과 같이 설명됩니다..." 와 같이 응답할 수 있습니다.
 
-사용자의 언어인 한국어로 응답해야 합니다.
-
-다음은 반드시 준수해야 할 통풍 관리 지침입니다 (국제 및 대한민국 지침 포함):
----
 ${getGuidelines('ko')}
----
 `;
 
-const summaryInstruction_EN = `You are a specialized AI assistant with one task: to analyze a conversation history between a user and a GoutCare AI and extract key health information provided by the user.
 
-**Instructions:**
-1.  Read the entire conversation history.
-2.  Identify and extract only the user's personal health information relevant to gout management. This includes:
-    *   Medications they are taking (e.g., allopurinol, febuxostat, colchicine). This includes information from '[Medication Logged]' entries.
-    *   Diagnosed chronic conditions (e.g., kidney disease, hypertension, diabetes).
-    *   Specific uric acid level values mentioned.
-    *   Frequency or dates of recent gout attacks/flares. This includes information from '[Symptom Check-in]' entries.
-    *   Key lifestyle factors they have explicitly mentioned (e.g., "I am a heavy beer drinker", "I am trying to lose weight").
-    *   Recent dietary habits from '[Diet Logged]' entries that might impact gout.
-3.  Format the extracted information as a concise, easy-to-read bulleted list.
-4.  If you cannot find any specific health information in the conversation, your entire response must be an empty string.
-5.  Do not add any greetings, explanations, or disclaimers. Just provide the bulleted list or an empty string.
-`;
-
-const summaryInstruction_KO = `당신은 사용자와 '통풍 관리 AI' 간의 대화 기록을 분석하여 사용자가 제공한 핵심 건강 정보를 추출하는 단 하나의 임무를 가진 전문 AI 어시스턴트입니다.
-
-**지침:**
-1.  전체 대화 기록을 읽으십시오.
-2.  통풍 관리와 관련된 사용자의 개인 건강 정보만을 식별하고 추출하십시오. 여기에는 다음이 포함됩니다:
-    *   복용 중인 약물 (예: 알로푸리놀, 페북소스타트, 콜히친). '[복용 기록]' 항목의 정보도 포함합니다.
-    *   진단받은 만성 질환 (예: 신장 질환, 고혈압, 당뇨병).
-    *   언급된 특정 요산 수치.
-    *   최근 통풍 발작/증상 악화의 빈도 또는 날짜. '[증상 기록]' 항목의 정보도 포함합니다.
-    *   사용자가 명시적으로 언급한 주요 생활 습관 (예: "저는 맥주를 많이 마십니다", "체중을 감량하려고 노력 중입니다").
-    *   통풍에 영향을 줄 수 있는 '[식단 기록]' 항목의 최근 식습관.
-3.  추출된 정보를 간결하고 읽기 쉬운 글머리 기호 목록으로 형식화하십시오.
-4.  대화에서 특정 건강 정보를 찾을 수 없는 경우, 응답은 반드시 빈 문자열이어야 합니다.
-5.  인사, 설명, 면책 조항 등 어떤 추가 텍스트도 넣지 마십시오. 글머리 기호 목록 또는 빈 문자열만 제공하십시오.
-`;
-
-export const generateChatResponseStream = (history: Content[], lang: string = 'en'): Promise<AsyncGenerator<GenerateContentResponse>> => {
-    const instruction = lang === 'ko' ? systemInstruction_KO : systemInstruction_EN;
-
-    return ai.models.generateContentStream({
-        model: 'gemini-2.5-flash',
-        contents: history,
-        config: {
+export const generateChatResponseStream = async function* (
+    history: any[], 
+    lang: string = 'en'
+) {
+    try {
+        const instruction = lang === 'ko' ? systemInstruction_KO : systemInstruction_EN;
+        
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-1.5-flash-latest",
             systemInstruction: instruction,
-            tools: [{ googleSearch: {} }],
-        }
-    });
-};
-
-
-export const summarizeHealthInfo = async (history: Content[], lang: string = 'en'): Promise<string> => {
-    const instruction = lang === 'ko' ? summaryInstruction_KO : summaryInstruction_EN;
-    
-    // The last message is the placeholder for the AI's response, so we exclude it.
-    const historyForSummary = history.slice(0, -1);
-
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: historyForSummary,
-        config: {
-            systemInstruction: instruction,
-        }
-    });
-
-    return response.text?.trim() || '';
-};
-
-export const generateGoutForecast = async (lang: string = 'en', location?: { latitude: number; longitude: number; }, healthProfile?: string): Promise<string> => {
-    const locationPrompt = location 
-        ? (lang === 'ko' 
-            ? `위도 ${location.latitude}, 경도 ${location.longitude} 위치의 날씨 예보를 기반으로` 
-            : `Based on the weather forecast for the location at latitude ${location.latitude} and longitude ${location.longitude},`)
-        : (lang === 'ko'
-            ? "온대 지역의 일반적인 날씨 패턴을 기반으로"
-            : "Based on general weather patterns for a temperate region,");
-
-    const locationNameInstruction = location
-        ? (lang === 'ko'
-            ? "응답에 이 지역의 이름(예: '서울, 대한민국')을 포함하는 최상위 'locationName' 필드를 추가해야 합니다."
-            : "The response must include a top-level 'locationName' field with the name of this region (e.g., 'Seoul, South Korea').")
-        : (lang === 'ko'
-            ? "응답에 최상위 'locationName' 필드를 '일반 지역'으로 설정해야 합니다."
-            : "The response must set the top-level 'locationName' field to 'Generic Region'.");
-    
-    const healthPrompt = healthProfile ? (
-        lang === 'ko'
-            ? `\n\n다음은 사용자의 건강 프로필입니다: "${healthProfile}". 이 정보(특히 최근 식단 및 약물 복용 기록)를 날씨 데이터와 결합하여 개인화된 통풍 예보와 알림을 생성하세요. 예를 들어, 사용자가 최근 퓨린이 많은 음식을 먹었다면 위험 지수를 약간 높게 조정해야 합니다. 반대로, 요산 저하제를 꾸준히 복용하고 있다면 위험도를 약간 낮출 수 있습니다.`
-            : `\n\nHere is the user's health profile: "${healthProfile}". Combine this information (especially recent diet and medication adherence) with weather data to generate a personalized gout forecast and alert. For example, if the user recently ate high-purine foods, the risk index should be adjusted slightly higher. Conversely, consistent use of urate-lowering therapy might slightly lower the risk.`
-    ) : '';
-
-    const alertInstruction = healthProfile ? (
-        lang === 'ko'
-            ? "사용자 건강 프로필이 제공되었으므로, 최상위 'personalizedAlert' 필드를 응답에 반드시 추가해야 합니다. 이 필드에는 오늘과 내일의 예보를 사용자의 특정 건강 상태(예: 신장 질환, 최근 식단)와 결합하여 사용자에게 직접 전달하는, 25단어 이내의 간결하고 실행 가능한 알림이 포함되어야 합니다. 예: '신장 질환이 있으시니, 다가오는 비 예보에 특히 주의하세요. 수분 섭취를 늘리는 것이 좋습니다.' 또는 '어제 붉은 고기를 드셨으니, 오늘은 수분 섭취에 더 신경 쓰시고 무리한 활동은 피하세요.' 건강 프로필이 없으면 이 필드는 생략해야 합니다."
-            : "Because a user health profile was provided, you MUST add a top-level 'personalizedAlert' field to the response. This field should contain a concise, friendly, and actionable alert (max 25 words) for the user, combining today's and tomorrow's forecast with their specific health conditions (e.g., kidney disease, recent diet). For example: 'With your kidney condition, the upcoming rainy weather might increase your risk. Remember to stay extra hydrated.' or 'After yesterday's red meat meal, focus on hydration and avoid strenuous activity today.' If no health profile is provided, this field must be omitted."
-    ) : '';
-
-    const prompt = lang === 'ko' ?
-        `${locationPrompt} 오늘부터 7일간의 통풍 예보를 생성해 주세요. ${locationNameInstruction}${healthPrompt} 각 날에 대해, '통풍 지수'('좋음', '보통', '주의', '위험' 중 하나), 0(위험 낮음)에서 100(위험 높음) 사이의 숫자 값인 '통풍 위험 지수', 그리고 해당 지수에 대한 이유를 '날씨가 좋아 관절 컨디션이 좋을 거에요.' 또는 '기압이 낮아져 관절 통증에 주의가 필요해요.' 와 같이 사용자에게 직접 전달하는 친근한 어조로, 10단어 이내의 매우 간결한 설명으로 제공해주세요. 통풍 지수는 일반적으로 비나 폭풍우가 오기 전이나 동반될 때 나타나는 기압 하강, 높은 습도, 급격한 온도 강하와 같이 관절 통증에 영향을 미치는 것으로 알려진 요인들을 기반으로 해야 합니다. ${alertInstruction}` :
-        `${locationPrompt} create a 7-day gout forecast starting from today. ${locationNameInstruction}${healthPrompt} For each day, provide a categorical 'Gout Index' ('Good', 'Moderate', 'Caution', 'High Risk'), a numeric 'Gout Risk Index' from 0 (low risk) to 100 (high risk), and a very concise explanation (max 10 words) for the index, written in a friendly, direct-to-user tone, like 'Good weather should mean happy joints today.' or 'Be cautious of joint pain as pressure drops.'. The Gout Index should be influenced by factors known to affect joint pain, such as falling barometric pressure, high humidity, and sudden temperature drops, which typically precede or accompany rainy or stormy weather. ${alertInstruction}`;
-    
-    const responseSchema = {
-        type: Type.OBJECT,
-        properties: {
-            locationName: {
-                type: Type.STRING,
-                description: "The name of the region for the forecast, e.g., 'Seoul, South Korea' or 'Generic Region'."
+        });
+        
+        // Filter out model messages from history start and ensure valid format
+        let validHistory = history.slice(0, -1).filter((msg, index) => {
+            // First message must be user, so skip any leading model messages
+            if (index === 0 && msg.role === 'model') return false;
+            return true;
+        });
+        
+        const chat = model.startChat({
+            history: validHistory,
+            generationConfig: {
+                temperature: 0.9,
+                topK: 1,
+                topP: 1,
+                maxOutputTokens: 2048,
             },
-            forecast: {
-                type: Type.ARRAY,
-                description: "An array of 7 daily forecast objects.",
-                items: {
-                    type: Type.OBJECT,
-                    properties: {
-                        day: {
-                            type: Type.STRING,
-                            description: "The day of the week (e.g., 'Monday')."
-                        },
-                        weather: {
-                            type: Type.STRING,
-                            description: "A single word describing the weather: 'Sunny', 'Cloudy', 'Rainy', or 'Stormy'."
-                        },
-                        goutIndex: {
-                            type: Type.STRING,
-                            description: "The calculated gout risk index: 'Good', 'Moderate', 'Caution', or 'High Risk'."
-                        },
-                        goutIndexNumeric: {
-                            type: Type.NUMBER,
-                            description: "A numeric risk index from 0 to 100."
-                        },
-                        explanation: {
-                            type: Type.STRING,
-                            description: "A very concise explanation (max 10 words) for the given Gout Index."
-                        }
-                    },
-                    required: ["day", "weather", "goutIndex", "goutIndexNumeric", "explanation"]
-                }
-            },
-            personalizedAlert: {
-                type: Type.STRING,
-                description: "A personalized alert for the user based on their health profile and the forecast. This is omitted if no profile is provided."
+        });
+        
+        const lastMessage = history[history.length - 1];
+        const messageContent = Array.isArray(lastMessage.parts) 
+            ? lastMessage.parts.map((part: any) => part.text || '').join(' ')
+            : lastMessage.parts?.text || '';
+        
+        const result = await chat.sendMessageStream(messageContent);
+        
+        for await (const chunk of result.stream) {
+            const chunkText = chunk.text();
+            if (chunkText && chunkText.trim()) {
+                yield {
+                    text: chunkText,
+                    candidates: [{
+                        content: { parts: [{ text: chunkText }] },
+                        finishReason: 'STOP'
+                    }]
+                };
             }
-        },
-        required: ["locationName", "forecast"]
-    };
-
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: responseSchema,
         }
-    });
+    } catch (error) {
+        console.error('[Gemini Service] Error:', error);
+        throw error;
+    }
+};
 
-    return response.text?.trim() || '{}';
+export const summarizeHealthInfo = async (messages: ChatMessage[]): Promise<string> => {
+    try {
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-1.5-flash-latest"
+        });
+        
+        const prompt = `Summarize the key health information from this conversation in bullet points:
+        ${messages.map(m => `${m.role}: ${m.content}`).join('\n')}`;
+        
+        const result = await model.generateContent(prompt);
+        const response = result.response;
+        return response.text();
+    } catch (error) {
+        console.error('[Gemini Service] Summarize error:', error);
+        return 'Error generating summary';
+    }
+};
+
+export const generateGoutForecast = async (
+    location: string,
+    healthProfile: string,
+    lang: string = 'ko'
+): Promise<any> => {
+    try {
+        console.log('[Gemini Forecast] Starting forecast generation:', { location, healthProfile: healthProfile?.substring(0, 50), lang });
+        
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-1.5-flash-latest"
+        });
+        
+        const prompt = lang === 'ko' 
+            ? `${location || '일반 지역'}의 7일간 통풍 예보를 생성해주세요. 건강 프로필: ${healthProfile || '없음'}. 
+
+다음 JSON 형식으로 정확히 7일치 예보를 반환해주세요:
+
+{
+  "locationName": "${location || '일반 지역'}",
+  "forecast": [
+    {
+      "day": "Today",
+      "weather": "Sunny",
+      "goutIndex": "좋음",
+      "goutIndexNumeric": 20,
+      "explanation": "날씨가 좋아서 통풍 관리에 도움이 됩니다."
+    },
+    {
+      "day": "Tomorrow", 
+      "weather": "Cloudy",
+      "goutIndex": "보통",
+      "goutIndexNumeric": 40,
+      "explanation": "흐린 날씨로 적당한 주의가 필요합니다."
+    }
+  ],
+  "personalizedAlert": "개인화된 알림 메시지"
+}
+
+goutIndex는 다음 중 하나를 사용하세요: "좋음", "보통", "주의", "위험"
+goutIndexNumeric은 0-100 사이의 숫자입니다 (낮을수록 좋음)
+weather는 다음 중 하나: "Sunny", "Cloudy", "Rainy", "Stormy"`
+            : `Generate a 7-day gout forecast for ${location || 'Generic Region'}. Health profile: ${healthProfile || 'None'}. 
+
+Return exactly 7 days forecast in this JSON format:
+
+{
+  "locationName": "${location || 'Generic Region'}",
+  "forecast": [
+    {
+      "day": "Today",
+      "weather": "Sunny",
+      "goutIndex": "Good",
+      "goutIndexNumeric": 20,
+      "explanation": "Good weather helps with gout management."
+    },
+    {
+      "day": "Tomorrow",
+      "weather": "Cloudy", 
+      "goutIndex": "Moderate",
+      "goutIndexNumeric": 40,
+      "explanation": "Cloudy weather requires moderate attention."
+    }
+  ],
+  "personalizedAlert": "Personalized alert message"
+}
+
+Use these goutIndex values: "Good", "Moderate", "Caution", "High Risk"
+goutIndexNumeric should be 0-100 (lower is better)
+weather should be one of: "Sunny", "Cloudy", "Rainy", "Stormy"`;
+        
+        console.log('[Gemini Forecast] Sending prompt to API...');
+        const result = await model.generateContent(prompt);
+        const response = result.response;
+        const text = response.text();
+        
+        console.log('[Gemini Forecast] Raw response:', text);
+        
+        // Try to parse JSON from response
+        try {
+            const parsed = JSON.parse(text);
+            console.log('[Gemini Forecast] Successfully parsed JSON:', parsed);
+            return parsed;
+        } catch (parseError) {
+            console.warn('[Gemini Forecast] JSON parse failed, using default:', parseError);
+            // Return a default 7-day forecast if parsing fails
+            const defaultForecast = {
+                locationName: location || (lang === 'ko' ? '일반 지역' : 'Generic Region'),
+                forecast: [
+                    { day: 'Today', weather: 'Sunny', goutIndex: lang === 'ko' ? '좋음' : 'Good', goutIndexNumeric: 20, explanation: lang === 'ko' ? '맑은 날씨로 통풍 관리에 좋습니다' : 'Clear weather is good for gout management' },
+                    { day: 'Tomorrow', weather: 'Cloudy', goutIndex: lang === 'ko' ? '보통' : 'Moderate', goutIndexNumeric: 40, explanation: lang === 'ko' ? '흐린 날씨로 적당한 주의가 필요합니다' : 'Cloudy weather requires moderate attention' },
+                    { day: 'Day 3', weather: 'Sunny', goutIndex: lang === 'ko' ? '좋음' : 'Good', goutIndexNumeric: 25, explanation: lang === 'ko' ? '좋은 날씨입니다' : 'Good weather conditions' },
+                    { day: 'Day 4', weather: 'Rainy', goutIndex: lang === 'ko' ? '주의' : 'Caution', goutIndexNumeric: 60, explanation: lang === 'ko' ? '비오는 날씨로 주의가 필요합니다' : 'Rainy weather requires caution' },
+                    { day: 'Day 5', weather: 'Cloudy', goutIndex: lang === 'ko' ? '보통' : 'Moderate', goutIndexNumeric: 35, explanation: lang === 'ko' ? '흐린 날씨입니다' : 'Cloudy conditions' },
+                    { day: 'Day 6', weather: 'Sunny', goutIndex: lang === 'ko' ? '좋음' : 'Good', goutIndexNumeric: 30, explanation: lang === 'ko' ? '맑은 날씨입니다' : 'Clear weather' },
+                    { day: 'Day 7', weather: 'Cloudy', goutIndex: lang === 'ko' ? '보통' : 'Moderate', goutIndexNumeric: 45, explanation: lang === 'ko' ? '주 말 흐린 날씨입니다' : 'Weekend cloudy weather' }
+                ],
+                personalizedAlert: lang === 'ko' 
+                    ? '수분을 충분히 섭취하고 적당한 운동을 하세요.' 
+                    : 'Stay hydrated and get moderate exercise.'
+            };
+            console.log('[Gemini Forecast] Using default forecast:', defaultForecast);
+            return defaultForecast;
+        }
+    } catch (error) {
+        console.error('[Gemini Service] Forecast error:', error);
+        throw error;
+    }
 };

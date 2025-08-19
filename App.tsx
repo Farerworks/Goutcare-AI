@@ -11,9 +11,16 @@ import MedicationLogModal from './components/MedicationLogModal';
 import DietLogModal from './components/DietLogModal';
 import DashboardPanel from './components/DashboardPanel';
 import CalendarPanel from './components/CalendarPanel';
+import ComprehensiveDashboard from './components/ComprehensiveDashboard';
+import OptimizedDashboard from './components/OptimizedDashboard';
+import UnifiedDashboard from './components/UnifiedDashboard';
+import ChatCalendarPanel from './components/ChatCalendarPanel';
 import HealthSummaryModal from './components/HealthSummaryModal';
 import SettingsModal from './components/SettingsModal';
 import LogSelectionModal from './components/LogSelectionModal';
+import WaterIntakeTracker from './components/WaterIntakeTracker';
+import UricAcidTracker from './components/UricAcidTracker';
+import MedicalRecordManager from './components/MedicalRecordManager';
 import { UsageMonitor } from './components/UsageMonitor';
 import getTranslator, { type Language, type TranslationKey } from './translations';
 
@@ -22,71 +29,11 @@ const lang: Language = navigator.language.split('-')[0] === 'ko' ? 'ko' : 'en';
 const t = getTranslator(lang);
 
 const getInitialMessages = (lang: Language, t: (key: TranslationKey, substitutions?: Record<string, string | number>) => string): ChatMessage[] => {
-  try {
-    const savedMessages = localStorage.getItem('goutChatMessages');
-    if (savedMessages) {
-      return JSON.parse(savedMessages);
-    }
-  } catch (error) {
-    console.error("Failed to parse messages from localStorage", error);
-    // Fall through to generate default messages
-  }
+  // Clear all localStorage data for fresh start
+  localStorage.clear();
   
-  // No saved data, generate welcome message + mock data
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-
-  const createLogDate = (day: number, hour: number, minute: number): string => {
-    const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
-    const validDay = day > lastDayOfMonth ? lastDayOfMonth : day;
-    return new Date(year, month, validDay, hour, minute).toISOString();
-  }
-
-  // Use the translator function `t` to generate logs in the correct language.
-  const mockLogs: ChatMessage[] = [
-    // --- Symptom Logs ---
-    {
-      role: 'user',
-      content: `[${t('symptomCheckinTitle')} - ${createLogDate(5, 22, 0)}]\n- ${t('painLocationLabel')}: ${lang === 'ko' ? '왼쪽 발목' : 'Left ankle'}\n- ${t('painLevelLabel', { painLevel: '' }).replace(': ', '').replace(':', '')}: 4/10\n- ${t('otherSymptomsLabel')}: ${t('symptomSwelling')}`
-    },
-    {
-      role: 'user',
-      content: `[${t('symptomCheckinTitle')} - ${createLogDate(12, 8, 30)}]\n- ${t('painLocationLabel')}: ${lang === 'ko' ? '오른쪽 엄지발가락' : 'Right big toe'}\n- ${t('painLevelLabel', { painLevel: '' }).replace(': ', '').replace(':', '')}: 8/10\n- ${t('otherSymptomsLabel')}: ${t('symptomSwelling')}, ${t('symptomRedness')}`
-    },
-    {
-      role: 'user',
-      content: `[${t('symptomCheckinTitle')} - ${createLogDate(18, 18, 0)}]\n- ${t('painLocationLabel')}: ${lang === 'ko' ? '오른쪽 무릎' : 'Right knee'}\n- ${t('painLevelLabel', { painLevel: '' }).replace(': ', '').replace(':', '')}: 6/10`
-    },
-    // --- Medication Logs ---
-    {
-      role: 'user',
-      content: `[${t('medicationLogTitle')} - ${createLogDate(12, 8, 35)}]\n- ${t('medicationNameLabel')}: ${lang === 'ko' ? '콜히친' : 'Colchicine'}\n- ${t('timeOfDayLabel')}: ${t('timeOfDayMorning')}`
-    },
-    {
-      role: 'user',
-      content: `[${t('medicationLogTitle')} - ${createLogDate(13, 9, 0)}]\n- ${t('medicationNameLabel')}: ${lang === 'ko' ? '알로푸리놀 100mg' : 'Allopurinol 100mg'}\n- ${t('timeOfDayLabel')}: ${t('timeOfDayMorning')}`
-    },
-    {
-      role: 'user',
-      content: `[${t('medicationLogTitle')} - ${createLogDate(18, 9, 5)}]\n- ${t('medicationNameLabel')}: ${lang === 'ko' ? '페북소스타트 40mg' : 'Febuxostat 40mg'}\n- ${t('timeOfDayLabel')}: ${t('timeOfDayMorning')}`
-    },
-    // --- Diet Logs ---
-    {
-      role: 'user',
-      content: `[${t('dietLogTitle')} - ${createLogDate(8, 9, 0)}]\n- ${t('foodDescriptionLabel').replace(':', '')}: ${lang === 'ko' ? '저지방 요거트와 체리' : 'Low-fat yogurt and cherries'}\n- ${t('timeOfDayLabel')}: ${t('timeOfDayBreakfast')}`
-    },
-    {
-      role: 'user',
-      content: `[${t('dietLogTitle')} - ${createLogDate(11, 19, 0)}]\n- ${t('foodDescriptionLabel').replace(':', '')}: ${lang === 'ko' ? '저녁 회식으로 삼겹살과 소주' : 'Pork belly and soju for a company dinner'}\n- ${t('timeOfDayLabel')}: ${t('timeOfDayDinner')}`
-    },
-    {
-      role: 'user',
-      content: `[${t('dietLogTitle')} - ${createLogDate(17, 12, 30)}]\n- ${t('foodDescriptionLabel').replace(':', '')}: ${lang === 'ko' ? '닭가슴살 샐러드' : 'Chicken breast salad'}\n- ${t('timeOfDayLabel')}: ${t('timeOfDayLunch')}`
-    },
-  ];
-
-  return [{ role: 'model', content: t('welcomeMessage') }, ...mockLogs];
+  // Always return only welcome message
+  return [{ role: 'model', content: t('welcomeMessage') }];
 };
 
 const Logo = () => (
@@ -107,9 +54,16 @@ const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>(() => getInitialMessages(lang, t));
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
   const [appError, setAppError] = useState<string | null>(null);
+  const [layoutMode, setLayoutMode] = useState<'2-panel' | '3-panel'>(() => {
+    // Always default to 2-panel, ignore any stored preference
+    return '2-panel';
+  });
   const [isSymptomModalOpen, setIsSymptomModalOpen] = useState(false);
   const [isMedicationModalOpen, setIsMedicationModalOpen] = useState(false);
   const [isDietModalOpen, setIsDietModalOpen] = useState(false);
+  const [isWaterModalOpen, setIsWaterModalOpen] = useState(false);
+  const [isUricAcidModalOpen, setIsUricAcidModalOpen] = useState(false);
+  const [isMedicalRecordModalOpen, setIsMedicalRecordModalOpen] = useState(false);
   const [selectedLogDate, setSelectedLogDate] = useState<Date | null>(null);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [healthSummary, setHealthSummary] = useState<string | null>(null);
@@ -123,14 +77,17 @@ const App: React.FC = () => {
   const showSuggestedPrompts = messages.length <= 1;
 
   const Panel: React.FC<{children: React.ReactNode, className?: string}> = ({ children, className }) => (
-    <div className={`bg-zinc-900 border border-zinc-800 rounded-xl relative overflow-hidden min-h-0 ${className}`}>
-        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-teal-500/50 to-transparent"></div>
+    <div className={`bg-gradient-to-br from-zinc-900/80 to-zinc-900/60 backdrop-blur-sm border border-zinc-700/50 rounded-2xl relative overflow-hidden min-h-0 shadow-xl ${className}`}>
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-teal-400/60 to-transparent"></div>
+        <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-teal-500/5 to-transparent rounded-full blur-xl"></div>
         {children}
     </div>
   );
 
   useEffect(() => {
     document.documentElement.lang = lang;
+    // Clear any layout preferences from localStorage
+    localStorage.removeItem('layoutMode');
   }, []);
 
   useEffect(() => {
@@ -217,7 +174,9 @@ const App: React.FC = () => {
       setMessages(prev => [...prev, { role: 'model', content: '' }]);
 
       for await (const chunk of stream) {
-        modelResponseText += chunk.text;
+        if (chunk.text && typeof chunk.text === 'string') {
+          modelResponseText += chunk.text;
+        }
         
         const newSources = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks?.filter(c => c.web) || [];
         if (newSources.length > 0) {
@@ -324,11 +283,14 @@ const App: React.FC = () => {
       }
   };
 
-  const openLogModal = (type: 'symptom' | 'medication' | 'diet', date: Date | null) => {
+  const openLogModal = (type: 'symptom' | 'medication' | 'diet' | 'water' | 'uricacid' | 'medical', date: Date | null) => {
     setSelectedLogDate(date || new Date());
     if (type === 'symptom') setIsSymptomModalOpen(true);
     if (type === 'medication') setIsMedicationModalOpen(true);
     if (type === 'diet') setIsDietModalOpen(true);
+    if (type === 'water') setIsWaterModalOpen(true);
+    if (type === 'uricacid') setIsUricAcidModalOpen(true);
+    if (type === 'medical') setIsMedicalRecordModalOpen(true);
   };
   
   const handleDateSelection = (date: Date) => {
@@ -336,7 +298,7 @@ const App: React.FC = () => {
     setIsLogSelectionModalOpen(true);
   };
 
-  const handleLogTypeSelected = (type: 'symptom' | 'medication' | 'diet') => {
+  const handleLogTypeSelected = (type: 'symptom' | 'medication' | 'diet' | 'water' | 'uricacid' | 'medical') => {
       setIsLogSelectionModalOpen(false);
       if (selectedLogDate) {
           openLogModal(type, selectedLogDate);
@@ -456,6 +418,54 @@ const App: React.FC = () => {
         selectedDate={selectedLogDate}
         recentFoods={recentFoods}
       />
+      <WaterIntakeTracker
+        isOpen={isWaterModalOpen}
+        onClose={() => {
+          setIsWaterModalOpen(false);
+          setSelectedLogDate(null);
+        }}
+        onComplete={(entry) => {
+          setIsWaterModalOpen(false);
+          if (entry) {
+            const summary = `[수분 섭취 기록] ${entry.amount}ml의 ${entry.type === 'water' ? '물' : entry.type}을 마셨습니다.`;
+            handleSendMessage({ text: summary });
+          }
+        }}
+        t={t}
+        selectedDate={selectedLogDate}
+      />
+      <UricAcidTracker
+        isOpen={isUricAcidModalOpen}
+        onClose={() => {
+          setIsUricAcidModalOpen(false);
+          setSelectedLogDate(null);
+        }}
+        onComplete={(entry) => {
+          setIsUricAcidModalOpen(false);
+          if (entry) {
+            const summary = `[요산 수치 기록] ${entry.level} mg/dL${entry.labName ? ` (${entry.labName})` : ''}${entry.notes ? ` - ${entry.notes}` : ''}`;
+            handleSendMessage({ text: summary });
+          }
+        }}
+        t={t}
+        selectedDate={selectedLogDate}
+      />
+      <MedicalRecordManager
+        isOpen={isMedicalRecordModalOpen}
+        onClose={() => {
+          setIsMedicalRecordModalOpen(false);
+          setSelectedLogDate(null);
+        }}
+        onComplete={(entry) => {
+          setIsMedicalRecordModalOpen(false);
+          if (entry) {
+            const summary = `[의료 기록] ${entry.type} ${entry.hospitalName ? `at ${entry.hospitalName}` : ''}${entry.diagnosis ? ` - ${entry.diagnosis}` : ''}`;
+            handleSendMessage({ text: summary });
+          }
+        }}
+        t={t}
+        selectedDate={selectedLogDate}
+      />
       <HealthSummaryModal
         isOpen={isSummaryModalOpen}
         onClose={() => setIsSummaryModalOpen(false)}
@@ -486,57 +496,119 @@ const App: React.FC = () => {
        />
       <div className="h-screen flex flex-col p-4 sm:p-6 lg:p-8 bg-zinc-950">
         <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col min-h-0">
-          <header className="text-center mb-6 flex-shrink-0 flex items-center justify-center gap-3">
-            <Logo />
-            <div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">
-                  GoutCare AI
-                </h1>
-                <p className="mt-1 text-zinc-400 text-sm">{t('appSubtitle')}</p>
+          <header className="mb-6 flex-shrink-0">
+            {/* Enhanced Header with Smart Status */}
+            <div className="bg-gradient-to-r from-zinc-900/50 via-zinc-800/30 to-zinc-900/50 rounded-2xl p-6 border border-zinc-700/50 shadow-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <Logo />
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-zinc-900 animate-pulse"></div>
+                  </div>
+                  <div>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-emerald-400 to-cyan-400">
+                      GoutCare AI
+                    </h1>
+                    <p className="mt-1 text-zinc-400 text-sm">{t('appSubtitle')}</p>
+                  </div>
+                </div>
+                
+                {/* Layout Toggle + Smart Status */}
+                <div className="hidden sm:flex items-center gap-3">
+                  <button
+                    onClick={() => setLayoutMode(layoutMode === '2-panel' ? '3-panel' : '2-panel')}
+                    className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 border ${
+                      layoutMode === '2-panel'
+                        ? 'bg-teal-600 text-white border-teal-500'
+                        : 'bg-zinc-700 text-zinc-300 border-zinc-600 hover:bg-zinc-600'
+                    }`}
+                  >
+                    {layoutMode === '2-panel' ? '📱 간편형' : '🖥️ 고급형'}
+                  </button>
+                  <div className="w-px h-8 bg-zinc-600"></div>
+                  <div className="text-right">
+                    <div className="text-xs text-zinc-500">시스템 상태</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                      <span className="text-xs text-green-400 font-medium">정상</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </header>
 
-          <main className="flex-1 grid grid-cols-1 lg:grid-cols-7 gap-6 lg:gap-8 min-h-0 lg:grid-rows-1 grid-rows-[auto_auto_1fr]">
-            <Panel className="lg:col-span-2">
-              <DashboardPanel
-                messages={messages}
-                t={t}
-                lang={lang}
-                healthProfileSummary={healthProfileSummary}
-              />
-            </Panel>
-            
-            <Panel className="lg:col-span-2">
-                <CalendarPanel 
-                    messages={messages}
-                    onLogRequest={handleDateSelection}
-                    t={t}
+{layoutMode === '2-panel' ? (
+            /* 2-Panel Layout: Dashboard + Chat/Calendar */
+            <main className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 min-h-0">
+              <Panel className="lg:col-span-2">
+                <UnifiedDashboard
+                  messages={messages}
+                  t={t}
+                  lang={lang}
+                  healthProfileSummary={healthProfileSummary}
                 />
-            </Panel>
-
-            <Panel className="lg:col-span-3">
-              {appError && (
-                <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg relative m-4 flex-shrink-0" role="alert">
-                  <strong className="font-bold">{t('errorPrefix')}</strong>
-                  <span className="block sm:inline">{appError}</span>
-                  <button onClick={() => { setAppError(null); }} className="absolute top-0 bottom-0 right-0 px-4 py-3">
-                    <span className="text-2xl">{t('closeError')}</span>
+              </Panel>
+              
+              <Panel className="lg:col-span-1">
+                <ChatCalendarPanel
+                  messages={messages}
+                  onSendMessage={handleSendMessage}
+                  isLoading={isAiLoading}
+                  onOpenSettings={() => setIsSettingsModalOpen(true)}
+                  onOpenLogModal={(type) => openLogModal(type, null)}
+                  onShowSummary={handleShowSummary}
+                  onLogRequest={handleDateSelection}
+                  t={t}
+                  showSuggestedPrompts={showSuggestedPrompts}
+                  appError={appError}
+                />
+              </Panel>
+            </main>
+          ) : (
+            /* 3-Panel Layout: Original Advanced Layout */
+            <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 min-h-0 lg:grid-rows-1 grid-rows-[auto_auto_1fr]">
+              <Panel className="lg:col-span-4">
+                <div className="flex items-center border-b border-zinc-700 p-2 space-x-1">
+                  <button className="px-3 py-2 text-xs font-medium rounded-lg bg-teal-600 text-white">
+                    📊 고급 대시보드
                   </button>
                 </div>
-              )}
+                <OptimizedDashboard messages={messages} t={t} />
+              </Panel>
+              
+              <Panel className="lg:col-span-3">
+                <CalendarPanel 
+                  messages={messages}
+                  onLogRequest={handleDateSelection}
+                  t={t}
+                />
+              </Panel>
 
-              <ChatWindow
-                messages={messages}
-                onSendMessage={handleSendMessage}
-                isLoading={isAiLoading}
-                onOpenSettings={() => setIsSettingsModalOpen(true)}
-                onOpenLogModal={(type) => openLogModal(type, null)}
-                onShowSummary={handleShowSummary}
-                t={t}
-                showSuggestedPrompts={showSuggestedPrompts}
-              />
-            </Panel>
-          </main>
+              <Panel className="lg:col-span-5">
+                {appError && (
+                  <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg relative m-4 flex-shrink-0" role="alert">
+                    <strong className="font-bold">{t('errorPrefix')}</strong>
+                    <span className="block sm:inline">{appError}</span>
+                    <button onClick={() => { setAppError(null); }} className="absolute top-0 bottom-0 right-0 px-4 py-3">
+                      <span className="text-2xl">{t('closeError')}</span>
+                    </button>
+                  </div>
+                )}
+
+                <ChatWindow
+                  messages={messages}
+                  onSendMessage={handleSendMessage}
+                  isLoading={isAiLoading}
+                  onOpenSettings={() => setIsSettingsModalOpen(true)}
+                  onOpenLogModal={(type) => openLogModal(type, null)}
+                  onShowSummary={handleShowSummary}
+                  t={t}
+                  showSuggestedPrompts={showSuggestedPrompts}
+                />
+              </Panel>
+            </main>
+          )}
         </div>
       </div>
       

@@ -10,7 +10,8 @@
       "Bash(cd:*)",
       "Bash(git branch:*)",
       "Bash(git checkout:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
