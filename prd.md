@@ -1,7 +1,7 @@
 # GoutCare AI: Product Requirements Document (PRD)
 
-**Version:** 1.1 (As of current build)
-**Status:** In Development
+**Version:** 2.0 (August 20, 2025 - Complete UI/UX Overhaul)
+**Status:** Production Ready (API Key Setup Required)
 
 ---
 
@@ -11,10 +11,11 @@ GoutCare AI is a personalized AI assistant designed to help gout patients better
 
 ## 2. Product Goals & Vision
 
--   **Provide Reliable Information:** Reduce confusion from misinformation by offering accurate and safe information based on verified gout management guidelines and the latest web search results.
--   **Systematic Health Management:** Help users with long-term management by enabling them to easily log their daily symptoms, medication intake, and meals, and visually track patterns through a unified calendar.
--   **Deliver a Personalized Experience:** Provide tailored responses and interactions, like a personal health assistant, by remembering past conversations and health logs.
--   **Empower Users:** Empower users to actively manage their condition and share more specific information during doctor consultations.
+-   **Intelligent Health Prediction:** Provide data-driven gout risk assessment using machine learning algorithms that analyze 5 key health factors for accurate attack probability forecasting.
+-   **Comprehensive Health Ecosystem:** Enable complete gout management through 6 integrated tracking systems (symptoms, medications, diet, hydration, uric acid, medical records) with AI-powered insights.
+-   **Intuitive User Experience:** Deliver a revolutionary 4-section interface that eliminates complexity while providing powerful functionality through smart dashboard design and predictive analytics.
+-   **Personalized Medical Intelligence:** Combine evidence-based medical guidelines with individual health patterns to provide tailored recommendations and proactive health management strategies.
+-   **Privacy-First Healthcare:** Ensure complete data privacy with 100% client-side processing while maintaining enterprise-grade functionality and medical accuracy.
 
 ## 3. Target Audience
 
@@ -24,30 +25,32 @@ GoutCare AI is a personalized AI assistant designed to help gout patients better
 
 ## 4. Key Features
 
-### 4.1. Conversational AI Agent
--   **Guideline-Based Responses:** Answers questions about diet, lifestyle, and medications based on a synthesis of internationally recognized medical guidelines. The AI's knowledge now includes a detailed list of common foods categorized by their purine content (mg per 100g), allowing it to offer more specific dietary advice.
--   **Multimodal Log Analysis:** The AI analyzes user-submitted health logs for symptoms, medication, and diet. It can interpret text and user-uploaded images (e.g., photos of meals or pills) to provide relevant feedback based on its guidelines, such as assessing the purine content of a meal from a picture.
--   **Intelligent Web Search:** When a user asks a question not covered by the guidelines, it performs a Google Search to provide a summarized answer with reliable sources.
--   **Natural Conversation Flow:** Remembers the context of past conversations and avoids redundant citations to maintain a natural dialogue.
--   **Markdown Rendering:** Renders bold text, lists, and other formatting in the AI's responses as clean HTML for improved readability.
--   **Safety-First Design:** Does not provide medical diagnoses or prescriptions and includes a disclaimer advising consultation with a professional in every response.
--   **Empathetic & Safe Interaction Logic:** The AI is programmed with sophisticated, multi-step response protocols for sensitive user queries, such as atypical symptoms or medication questions.
+### 4.1. Revolutionary 4-Section Interface
+-   **🏠 Smart Home Dashboard:** Intelligent 2x2 grid layout featuring real-time risk assessment, weekly predictions, personalized daily tips, and quick action buttons for immediate health logging.
+-   **💬 AI Chat Assistant:** Advanced conversational AI powered by Google Gemini 1.5 Flash, grounded in medical guidelines (ACR, EULAR, KCR) with live web search and multimodal analysis capabilities.
+-   **📅 Health Records Calendar:** Comprehensive tracking system with integrated calendar view, supporting 6 types of health data with visual timeline and trend analysis.
+-   **⚙️ Advanced Settings:** Complete data management suite with import/export functionality, health profile insights, and privacy controls.
 
-### 4.2. Health Dashboard
-The Health Dashboard uses a three-panel layout on desktop to provide a comprehensive overview of the user's health status.
--   **Left Panel (Dashboard):** Contains the `Personalized Gout Forecast` and the `Tip of the Day` widget.
--   **Center Panel (Calendar & Trends):**
-    -   **Unified Log Calendar:** A central, interactive calendar for logging and viewing health history. Clicking a date opens a menu to select a log type (symptom, medication, or diet). Logged dates are marked with distinct icons (symptoms ❤️, medication 💊, diet 🍴).
-    -   **Pain Trend Chart:** A line chart located below the calendar that visualizes the user's logged pain levels over the last 30 days, making it easy to spot trends and patterns.
--   **Personalized Gout Forecast:** The AI generates a 7-day forecast that combines weather data with the user's personal health profile (summarized from conversation history, including recent diet and medication adherence). This provides a more accurate, personalized gout risk assessment and actionable alerts.
--   **Tip of the Day:** A widget that randomly displays useful daily tips (e.g., stay hydrated, recommended foods) to motivate the user.
+### 4.2. Intelligent Risk Assessment System
+-   **5-Factor Risk Calculation:** Sophisticated algorithm analyzing symptoms (30%), uric acid levels (25%), hydration (20%), medication adherence (15%), and diet quality (10%) for accurate gout attack probability (0-100 scale).
+-   **Machine Learning Predictions:** Historical pattern recognition for 7-day risk forecasting based on personal health data, seasonal factors, and lifestyle patterns.
+-   **Real-Time Updates:** Dynamic risk scores that adjust instantly as new health data is logged, providing immediate feedback on health decisions.
+-   **Actionable Insights:** Personalized recommendations with specific steps to reduce identified risk factors and optimize health outcomes.
 
-### 4.3. Health Logging
--   **Intuitive Input Modals:** Clicking a date on the calendar brings up a clear selection modal. Choosing a log type opens a separate, easy-to-use modal for logging symptoms, medication, or diet.
--   **Symptom Logging:** Users can log the pain location, pain level (via a slider), other symptoms (swelling, redness), and additional notes.
--   **Medication Logging:** Users can record the medication name, time of day (morning, lunch, dinner, bedtime), intake time, notes, and an optional photo of the medication.
--   **Diet Logging:** Features a streamlined, two-step modal: users first provide a meal description or photo ("What did you eat?"), then select the time of day and add notes ("When did you eat?").
--   **Automatic Chat Integration:** Upon completion, each log is formatted into a standardized text summary (with image if applicable) and sent to the chat, allowing the AI to acknowledge and use this information in the conversation.
+### 4.3. Comprehensive Health Tracking
+-   **Enhanced Symptom Logging:** Pain location mapping, intensity scaling (0-10), associated symptoms (swelling, redness, warmth), photographic documentation, and detailed notes.
+-   **Advanced Medication Management:** Drug identification, scheduling, dosage tracking, adherence monitoring, side effect reporting, and medication photo analysis.
+-   **Intelligent Diet Monitoring:** Meal descriptions, photo analysis for purine content assessment, timing correlation, portion estimation, and nutritional insights.
+-   **Water Intake Tracking:** Daily hydration goals, multiple beverage types (water, tea, coffee, juice), intake timing, and progress visualization.
+-   **Uric Acid Monitoring:** Lab result tracking, trend analysis, target management, hospital/lab documentation, and correlation with symptoms.
+-   **Medical Records Management:** Complete healthcare documentation including 6 record types (blood tests, urine tests, X-rays, prescriptions, consultations, other), file attachments, doctor/hospital information, and visit summaries.
+
+### 4.4. Advanced AI Assistant
+-   **Guideline-Based Intelligence:** Responses grounded in internationally recognized medical guidelines with comprehensive food purine database and medication interaction knowledge.
+-   **Multimodal Analysis:** Advanced image recognition for food identification, medication verification, and medical document interpretation.
+-   **Live Web Search Integration:** Real-time access to latest medical research with source citations and reliability scoring.
+-   **Cost-Optimized Performance:** Smart token usage management with daily/monthly limits, usage monitoring, and efficient response generation.
+-   **Bilingual Medical Support:** Full English and Korean language capabilities with medical terminology accuracy and cultural context awareness.
 
 ### 4.4. Data Management & Privacy
 -   **Local-Only Storage:** All conversation history and health data are stored exclusively in the user's web browser `LocalStorage`.
@@ -56,24 +59,50 @@ The Health Dashboard uses a three-panel layout on desktop to provide a comprehen
 -   **Conversation History Import/Export:** Features to download the complete chat history (including images) as a `.json` file for backup and to import a history file, overwriting the current session.
 -   **Chat Reset:** A feature allows users to clear all their data and start fresh at any time.
 
-## 5. UI/UX Design
+## 5. UI/UX Design (August 20, 2025 Overhaul)
 
--   **Design Philosophy:** A calm and intuitive design that helps users comfortably access information and focus on their health.
--   **Layout:** A responsive three-panel design for desktop that provides a comprehensive overview: a health dashboard (left), a central calendar and trends panel (middle), and the chat window (right). This layout adapts to a stacked, single-column view on mobile devices for optimal usability.
--   **Color Palette:** A dark mode theme (based on Zinc/Slate colors) to reduce eye strain, with Teal, Sky, and Amber as accent colors to build a sense of trust and clarity, and to differentiate between logging functions.
--   **Accessibility:** Designed with accessibility in mind, using clear icons, ARIA labels, and a logical layout.
+-   **Design Philosophy:** Revolutionary simplicity meeting intelligent functionality - eliminating complexity while enhancing capability through data-driven insights and predictive analytics.
+-   **4-Section Navigation:** Clean, intuitive interface with distinct sections (Home/Chat/Records/Settings) that eliminates information scatter and choice fatigue through focused functionality.
+-   **Smart Home Dashboard:** Innovative 2x2 grid layout providing immediate access to critical health information: risk scores, predictions, daily tips, and quick actions - all optimized for decision-making efficiency.
+-   **Visual Hierarchy:** Risk-based color coding with professional SVG icons, ensuring critical information is immediately identifiable while maintaining aesthetic consistency.
+-   **Responsive Intelligence:** Adaptive interface that responds to user behavior patterns and health data trends, providing contextual information exactly when needed.
+-   **Accessibility Excellence:** WCAG 2.1 AA compliance with keyboard navigation, screen reader optimization, and high contrast support for medical accessibility requirements.
 
-## 6. Technical Stack
+## 6. Technical Stack (Updated August 20, 2025)
 
--   **Frontend:** React, TypeScript, Tailwind CSS
--   **AI Model:** Google Gemini API (`gemini-2.5-flash` model)
--   **AI SDK:** `@google/genai`
--   **Core AI Feature:** Gemini `googleSearch` Tool
--   **Data Storage:** Browser LocalStorage
+-   **Frontend Framework:** React 19.1.1 + TypeScript (Latest stable versions)
+-   **Build System:** Vite 6.3.5 (Ultra-fast development and optimized production builds)
+-   **Styling:** Tailwind CSS 3.x (Utility-first CSS with custom design system)
+-   **AI Model:** Google Gemini 1.5 Flash (Cost-optimized with 1.5M tokens/month free tier)
+-   **AI SDK:** `@google/genai` (Official Google AI SDK with streaming support)
+-   **AI Features:** Live web search, image analysis, multilingual support
+-   **Data Storage:** Browser LocalStorage (100% privacy-compliant)
+-   **State Management:** React hooks with centralized App.tsx architecture
+-   **Icon System:** Professional SVG components with consistent design language
+-   **Cost Management:** Real-time token usage monitoring with daily/monthly limits
 
-## 7. Future Roadmap
+## 7. Future Roadmap (Post-August 20, 2025)
 
--   **Data Visualization:** Add charts and graphs to visualize trends in pain levels, symptom frequency, and potential correlations with diet/medication logs.
--   **Advanced Medication Tracking:** Enhance the medication feature to include dosage tracking and set reminders for intake.
--   **Data Export:** Allow users to export their health logs as a PDF or CSV file to share with their doctor.
--   **Push Notifications:** Implement notifications for logging reminders and medication alerts.
+### Phase 1: Enhanced User Experience (1-2 weeks)
+-   **PWA Conversion:** Progressive Web App capabilities with offline support and app installation
+-   **Enhanced Data Visualization:** Interactive charts for pain trends, medication effectiveness, and dietary impact correlation
+-   **Smart Notifications:** Intelligent reminders for medication, hydration, and health logging based on personal patterns
+-   **Theme Customization:** Dark/light theme toggle with accessibility preferences
+
+### Phase 2: Advanced Analytics (1-2 months)
+-   **Predictive Analytics Dashboard:** Advanced machine learning models for long-term gout management insights
+-   **Correlation Analysis:** Automated detection of personal trigger patterns and protective factors
+-   **Health Report Generator:** Comprehensive PDF reports for healthcare provider sharing
+-   **Integration APIs:** Apple Health, Google Fit, and wearable device connectivity
+
+### Phase 3: Ecosystem Expansion (2-6 months)
+-   **Multi-Provider AI Routing:** Cost optimization through intelligent AI model selection
+-   **Healthcare Provider Dashboard:** B2B platform for medical professionals to monitor patient progress
+-   **Multi-Disease Platform:** Expansion to diabetes, hypertension, and other chronic conditions
+-   **Telemedicine Integration:** Direct connection with healthcare providers for virtual consultations
+
+### Phase 4: Enterprise & Research (6+ months)
+-   **Clinical Research Platform:** Anonymous data contribution for gout research advancement
+-   **Enterprise Health Solutions:** Corporate wellness programs with aggregate health insights
+-   **AI Model Training:** Custom medical AI models trained on anonymized user data
+-   **Global Health Network:** International expansion with localized medical guidelines

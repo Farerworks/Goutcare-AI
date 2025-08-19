@@ -2,7 +2,7 @@
 
 **Your Personal AI Assistant for Gout Management, Powered by Google Gemini**
 
-GoutCare AI is a privacy-first, browser-based application designed to help individuals manage gout. It combines a knowledgeable AI assistant, grounded in medical guidelines and powered by the Google Gemini API, with a comprehensive health dashboard for tracking symptoms, medication, and diet. All user data is stored exclusively on the user's device, ensuring complete privacy.
+GoutCare AI is a privacy-first, browser-based application designed to help individuals manage gout through intelligent AI assistance and comprehensive health tracking. Featuring a completely reimagined interface with smart risk prediction, the app combines advanced AI insights with an intuitive 4-section navigation system. All user data is stored exclusively on the user's device, ensuring complete privacy.
 
 ![GoutCare AI Screenshot](https://storage.googleapis.com/aip-dev-user-uploads/user-46549a75-1025-4591-95fd-2e70b22a2c17/57a75225-b467-4389-8b01-b5866162153c.png)
 
@@ -12,27 +12,32 @@ GoutCare AI is a privacy-first, browser-based application designed to help indiv
 
 ## 🚀 Key Features
 
-- **Intelligent & Multimodal AI Assistant:**
-  - **Powered by Google Gemini (`gemini-2.5-flash`):** Provides intelligent, context-aware answers.
-  - **Guideline-Based Knowledge:** Core knowledge is based on established gout management guidelines.
-  - **Image Analysis:** The AI can analyze user-uploaded images of meals to assess purine content and provide dietary feedback, or identify medications.
-  - **Live Web Search:** Uses the Gemini `googleSearch` tool to find up-to-date information, complete with source citations.
-  - **Multilingual:** Fully supports both English and Korean.
+- **Revolutionary 4-Section Interface (Updated August 20, 2025):**
+  - **🏠 Smart Home Dashboard:** 2x2 grid layout featuring today/tomorrow risk scores, weekly predictions, personalized daily tips, and quick action buttons
+  - **💬 AI Chat Assistant:** Powered by Google Gemini 1.5 Flash with medical guidelines, web search, and image analysis
+  - **📅 Health Records:** Integrated calendar with comprehensive tracking and trend visualization
+  - **⚙️ Advanced Settings:** Complete data management, import/export, and health profile insights
 
-- **Dual Layout System (Updated 2025-01-19):**
-  - **2-Panel Mode (Default):** Optimized layout for efficiency
-    - **Unified Health Dashboard:** Consolidated view with 3 modes (Summary/Tracking/Analysis)
-    - **Integrated Chat & Calendar Panel:** Combined interface with flexible layout options (vertical/tabs)
-  - **3-Panel Mode (Advanced):** Traditional detailed layout for power users
-    - **Optimized Dashboard:** Advanced analytics and visualizations
-    - **Dedicated Calendar Panel:** Full-featured calendar with pain trend chart
-    - **Separate Chat Window:** Focused AI conversation interface
+- **Intelligent Risk Assessment System:**
+  - **Data-Driven Predictions:** 5-factor gout risk calculation (0-100 scale) based on symptoms, uric acid levels, hydration, medication adherence, and diet
+  - **Weekly Trend Analysis:** Machine learning-powered 7-day risk forecasting using historical patterns
+  - **Personalized Insights:** Daily tips and recommendations tailored to individual risk factors
+  - **Real-Time Monitoring:** Instant risk updates as new health data is logged
 
-- **Seamless Health Logging:**
-  - **Symptom Logging:** Log pain location, pain level (0-10), associated symptoms (swelling, redness), and notes.
-  - **Medication Logging:** Record medication name, time of day, intake time, notes, and an optional photo for AI analysis.
-  - **Diet Logging:** Log meals through a streamlined two-step process: first, describe the meal or add a photo; second, select the time of day and add any relevant notes.
-  - **Automatic Chat Integration:** All logs are automatically formatted and sent to the chat, creating a continuous record that the AI can reference.
+- **Comprehensive Health Tracking:**
+  - **Symptom Logging:** Pain location, intensity (0-10), associated symptoms, and detailed notes
+  - **Medication Management:** Drug names, schedules, photos, and adherence tracking
+  - **Diet Monitoring:** Meal descriptions, photos, purine content analysis, and timing
+  - **Water Intake Tracking:** Daily hydration goals with multiple beverage types
+  - **Uric Acid Monitoring:** Lab results, trends, and target management
+  - **Medical Records:** Complete healthcare documentation with file attachments
+
+- **Advanced AI Assistant:**
+  - **Guideline-Based Knowledge:** Grounded in ACR, EULAR, and KCR medical standards
+  - **Multimodal Analysis:** Image recognition for food and medication identification
+  - **Live Web Search:** Real-time medical research with source citations
+  - **Bilingual Support:** Full English and Korean language capabilities
+  - **Cost Optimization:** Smart token usage with daily/monthly limits and monitoring
 
 - **Privacy-First Data Management:**
   - **100% Client-Side:** All conversation history and health data are stored directly in the browser's `localStorage`.
@@ -54,106 +59,132 @@ GoutCare AI is a privacy-first, browser-based application designed to help indiv
 
 ### Prerequisites
 
-- A modern web browser.
-- A Google Gemini API Key.
+- **Node.js 18+** and **npm**
+- **Modern web browser** (Chrome, Firefox, Safari, Edge)
+- **Google Gemini API Key** (free: 1.5M tokens/month)
 
-### Running the Application
+### Quick Setup
 
-This project is a static web application and can be run using any simple local server.
+1. **Clone and Install:**
+   ```bash
+   git clone https://github.com/your-username/goutcare-ai.git
+   cd goutcare-ai
+   npm install
+   ```
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/your-username/goutcare-ai.git
-    cd goutcare-ai
-    ```
+2. **Get Your API Key:**
+   - Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Create a free Gemini API key (1.5M tokens/month included)
 
-2.  **Set up the API Key:**
-    The application is configured to use an environment variable `process.env.API_KEY`. This is typically set by the deployment environment. For local development, you can create a simple script to replace this placeholder.
+3. **Configure Environment:**
+   ```bash
+   # Create .env file
+   echo "VITE_GEMINI_API_KEY=your-actual-api-key-here" > .env
+   ```
 
-3.  **Serve the files:**
-    You can use a simple static server to run the application locally. If you have Node.js installed, you can use the `serve` package.
+4. **Start Development Server:**
+   ```bash
+   npm run dev
+   # Open http://localhost:5173/
+   ```
 
-    ```bash
-    # Install serve globally if you haven't already
-    npm install -g serve
+5. **Build for Production:**
+   ```bash
+   npm run build
+   npm run preview
+   ```
 
-    # Run the server from the project's root directory
-    serve .
-    ```
-    The application will then be available at `http://localhost:3000` (or another port specified by the server).
+### ✅ Verification
 
-## 🎨 UX/UI Improvements (January 2025)
+After setup, you should see:
+- 🏠 Smart dashboard with risk scores
+- 💬 AI chat responding to questions  
+- 📅 Interactive health calendar
+- ⚙️ Settings with data management options
 
-### Major Interface Overhaul
+## 🎨 Revolutionary UI/UX (August 20, 2025)
 
-GoutCare AI now features a completely redesigned interface focused on user experience and efficiency:
+### Complete Interface Transformation
 
-#### Dual Layout System
-- **Smart Layout Switching:** Toggle between simplified 2-panel and advanced 3-panel layouts based on your needs
-- **Default 2-Panel Mode:** Optimized for most users with consolidated information and minimal duplication
-- **Advanced 3-Panel Mode:** For power users who want detailed, separated views
+GoutCare AI has been completely redesigned with a focus on simplicity, intelligence, and user empowerment:
 
-#### New Components
-- **UnifiedDashboard:** Eliminates duplicate information with 3 distinct modes:
-  - 🏥 **Health Summary:** Key metrics at a glance with risk assessment
-  - 📝 **Daily Tracking:** Today's progress and logging status  
-  - 📊 **Deep Analysis:** Trends, predictions, and advanced insights
+#### 4-Section Navigation Revolution
+- **🏠 Home:** Smart dashboard with risk prediction and quick actions
+- **💬 Chat:** Focused AI conversation with medical expertise  
+- **📅 Records:** Integrated calendar with comprehensive health tracking
+- **⚙️ Settings:** Advanced data management and personalization
 
-- **ChatCalendarPanel:** Revolutionary combined interface:
-  - **Flexible Layouts:** Switch between vertical (calendar-top) and tabbed interfaces
-  - **Space Optimization:** Calendar sized at 220px with expandable chat area (400px+)
-  - **Seamless Integration:** Calendar interactions don't interfere with chat scrolling
+#### Smart Home Dashboard (2x2 Grid)
+- **Today/Tomorrow Risk Scores:** Real-time gout attack probability (0-100)
+- **Weekly Risk Prediction:** 7-day trend analysis based on personal data
+- **Personalized Daily Tips:** AI-generated recommendations for optimal health
+- **Quick Action Buttons:** One-tap access to symptom, medication, and diet logging
 
-- **CompactCalendar:** Purpose-built for efficiency:
-  - **Micro-sized Cells:** 5x5 grid cells maximize information density
-  - **Activity Indicators:** Tiny colored dots show logged data (symptoms/meds/diet)
-  - **Safe Interactions:** Proper event handling prevents UI conflicts
+#### Intelligent Risk Assessment
+- **5-Factor Analysis:** Symptoms (30%), Uric Acid (25%), Hydration (20%), Medication (15%), Diet (10%)
+- **Machine Learning Predictions:** Historical pattern recognition for accurate forecasting
+- **Dynamic Updates:** Risk scores adjust in real-time as new data is logged
+- **Actionable Insights:** Specific recommendations to reduce identified risk factors
 
-#### Enhanced User Experience
-- **Visual Hierarchy:** Health risks clearly prioritized with color-coded indicators
-- **Intuitive Navigation:** Emoji-based icons with descriptive tooltips
-- **Responsive Design:** Consistent experience across all screen sizes
-- **Interaction Safety:** All buttons include proper event handling to prevent display glitches
+#### Enhanced Health Tracking
+- **6 Tracking Categories:** Symptoms, medications, diet, water intake, uric acid levels, medical records
+- **Visual Timeline:** Integrated calendar showing all health events with color coding
+- **Trend Analysis:** Automatic pattern detection and correlation insights
+- **File Attachments:** Support for photos and medical documents
 
 ## 📁 Project Structure
 
 ```
-.
-├── App.tsx                       # Main application component
-├── index.html                    # Entry HTML file
-├── index.tsx                     # React root entry point
-├── metadata.json                 # Application metadata for the platform
-├── prd.md                        # Product Requirements Document
-├── README.md                     # This file
-├── translations.ts               # i18n translations for EN/KO
-├── types.ts                      # TypeScript type definitions
-├── components/                   # Reusable React components
-│   ├── CalendarPanel.tsx         # Dedicated calendar with trends
-│   ├── ChatCalendarPanel.tsx     # NEW: Integrated chat+calendar panel
-│   ├── ChatWindow.tsx            # AI conversation interface
-│   ├── CompactCalendar.tsx       # NEW: Space-optimized calendar
-│   ├── ComprehensiveDashboard.tsx
-│   ├── DashboardPanel.tsx        # Legacy dashboard component
-│   ├── DietLogModal.tsx
-│   ├── GoutForecast.tsx
-│   ├── HealthSummaryModal.tsx
-│   ├── IconComponents.tsx
-│   ├── LogSelectionModal.tsx
-│   ├── MedicationLogModal.tsx
-│   ├── OptimizedDashboard.tsx    # Advanced 3-panel dashboard
-│   ├── PainTrendChart.tsx
-│   ├── SettingsModal.tsx
-│   ├── SymptomCheckinModal.tsx
-│   ├── UnifiedDashboard.tsx      # NEW: Consolidated 2-panel dashboard
-│   └── [Additional health trackers...]
-├── hooks/                        # Custom React hooks
+goutcare-ai/
+├── App.tsx                          # 🔄 Main app with 4-section navigation
+├── index.html                       # Entry HTML file
+├── types.ts                         # 🔄 Extended TypeScript definitions
+├── translations.ts                  # i18n support (EN/KO)
+├── components/                      # React components
+│   ├── MainNavigation.tsx           # 🆕 4-section navigation system
+│   ├── SmartHomeDashboard.tsx       # 🆕 Intelligent 2x2 home dashboard
+│   ├── AdvancedSettings.tsx         # 🆕 Comprehensive settings page
+│   ├── ChatWindow.tsx               # AI conversation interface
+│   ├── CalendarPanel.tsx            # Health records calendar
+│   ├── WaterIntakeTracker.tsx       # 🆕 Hydration tracking
+│   ├── UricAcidTracker.tsx          # 🆕 Uric acid monitoring
+│   ├── MedicalRecordManager.tsx     # 🆕 Medical records with attachments
+│   ├── SymptomCheckinModal.tsx      # Symptom logging
+│   ├── MedicationLogModal.tsx       # Medication tracking
+│   ├── DietLogModal.tsx             # Diet and nutrition logging
+│   ├── SettingsModal.tsx            # Data management
+│   ├── IconComponents.tsx           # 🔄 Professional SVG icon system
+│   └── UsageMonitor.tsx             # AI cost tracking
+├── services/                        # AI and external services
+│   ├── geminiService.ts             # Original Gemini integration
+│   ├── geminiOptimized.ts           # 🔄 Cost-optimized AI service
+│   └── ai/                          # Extensible AI architecture
+├── utils/                           # Utility functions
+│   ├── riskCalculator.ts            # 🆕 Gout risk assessment engine
+│   ├── parsers.ts                   # Data parsing utilities
+│   └── imageUtils.ts                # Image processing
+├── hooks/                           # Custom React hooks
 │   └── useDebounce.ts
-├── services/                     # Services for external APIs
-│   └── geminiOptimized.ts        # Updated AI service with cost optimization
-└── utils/                        # Utility functions
-    ├── imageUtils.ts
-    └── parsers.ts
+├── docs/                            # Documentation
+│   ├── PROJECT_SUMMARY.md           # 🔄 Complete project overview
+│   ├── DEVELOPMENT_SESSION_SUMMARY.md # 🆕 Latest development session
+│   ├── prd.md                       # Product requirements
+│   └── README.md                    # This file
+└── deployment/                      # Build and deployment configs
 ```
+
+### 🆕 New Components (August 20, 2025)
+- **MainNavigation.tsx**: Clean 4-section navigation
+- **SmartHomeDashboard.tsx**: Risk prediction dashboard
+- **WaterIntakeTracker.tsx**: Daily hydration goals
+- **UricAcidTracker.tsx**: Lab result monitoring
+- **MedicalRecordManager.tsx**: Complete medical history
+- **AdvancedSettings.tsx**: Unified settings interface
+
+### 🔄 Enhanced Components
+- **App.tsx**: Simplified navigation logic
+- **IconComponents.tsx**: Professional SVG icons
+- **types.ts**: Extended health tracking types
 
 ## 📄 License
 
